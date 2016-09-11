@@ -1,0 +1,95 @@
+//
+//  menubar.cpp
+//  digital
+//
+//  Created by Bryce on 8/27/16.
+//
+//
+
+#include "menubar.hpp"
+
+void MenuBar::Submenu::draw()
+{
+    
+}
+
+void MenuBar::addSubmenu(string name)
+{
+    menus.push_back(Submenu(name));
+    Submenu *m = &menus[menus.size()-1];
+    
+    if(menus.size() > 1) {
+        Submenu *prevMenu = &menus[menus.size()-2];
+        m->rect = prevMenu->rect;
+        m->rect.x1 += prevMenu->name.length() * 12;
+        m->rect.x2 += prevMenu->name.length() * 12;
+    } else {
+        m->rect = Rectf(0, 0, m->name.length() * 12, height);
+    }
+}
+
+void MenuBar::addItem(string submenu, string name, function<void()> callback)
+{
+    Submenu *sm = nullptr;
+    
+    for(auto m : menus) {
+        if(m.name.compare(submenu) == 0) {
+            sm = &m;
+            break;
+        }
+    }
+    if(sm != nullptr)
+        sm->addItem(name, callback);
+}
+
+void MenuBar::draw()
+{
+    Rectf submenuRect(0, 0, getWindowWidth(), height);
+    gl::color(0.8f,0.8f,0.8f);
+    gl::drawSolidRect(submenuRect);
+    
+    for(auto sm : menus) {
+        submenuRect.x2 = submenuRect.x1 + sm.name.length() * 12;
+        
+        Rectf textRect = submenuRect;
+        textRect.x1 += 4;
+        textRect.y1 = 4;
+        
+        if(sm.open) {
+            gl::color(0, 0, 0);
+            gl::drawSolidRect(submenuRect);
+            gl::drawString(sm.name, textRect.getUpperLeft(), ColorA(1,1,1));
+            sm.draw();
+        } else {
+            gl::color(0.8f,0.8f,0.8f);
+            gl::drawSolidRect(submenuRect);
+            gl::drawString(sm.name, textRect.getUpperLeft(), ColorA(0,0,0));
+        }
+        submenuRect.x1 += sm.name.length() * 12;
+    }
+}
+
+void MenuBar::onMouseDrag(MouseEvent event)
+{
+    
+}
+
+void MenuBar::onMouseDown(MouseEvent event)
+{
+    ivec2 mousePos = event.getPos();
+
+    for(auto &sm : menus) {
+        if(sm.rect.contains(mousePos)) {
+            sm.open = true;
+        } else {
+            sm.open = false;
+        }
+    }
+}
+
+void MenuBar::onMouseUp(MouseEvent event)
+{
+    for(auto &sm : menus) {
+        sm.open = false;
+    }
+}
