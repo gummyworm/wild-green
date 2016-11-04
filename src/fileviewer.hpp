@@ -64,7 +64,7 @@ class FileViewer : public PRGLauncher {
 protected:
 public:
     FileViewer();
-    void launch();
+    void launch() override;
     void onMouseDown(MouseEvent event) override;
 };
 

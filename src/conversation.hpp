@@ -23,7 +23,10 @@ class Conversation {
 public:
     Conversation();
     void addSpeaker(shared_ptr<SpeechBubble> speaker);
+    void say(shared_ptr<SpeechBubble> speaker, shared_ptr<SpeechBubble> listener, string msg);
     void say(shared_ptr<SpeechBubble> speaker, string msg);
+    
+    vector<shared_ptr<SpeechBubble>> getSpeakers() {return speakers;}
 };
 
 #endif /* conversation_hpp */

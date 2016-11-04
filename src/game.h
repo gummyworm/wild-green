@@ -9,12 +9,16 @@
 #ifndef game_h
 #define game_h
 
+#include "cinder/gl/gl.h"
+#include "entity.hpp"
 #include "playercam.hpp"
+#include "speechbubble.hpp"
+#include "window.hpp"
+#include "guimanager.hpp"
 
 extern PlayerCam mainCam;
 
 vec3 screenToWorld(const ivec2 &scr, float z);
-
 
 namespace game {
     void setup();
@@ -28,6 +32,16 @@ namespace game {
     void onMouseMove(MouseEvent event);
     void onMouseDrag(MouseEvent event);
     void onKeydown(KeyEvent event);
+    
+    bool pick(Entity *e, WidgetWindow *win, vec2 pos, vec3 *pickedPoint, vec3 *pickedNormal);
+    shared_ptr<Entity> getPicked(ivec2 pos);
+    
+    extern gl::GlslProgRef uiProg;
+    extern float deltaTime;
+    
+    void say(Entity *speaker, string msg);
+    
+    extern GUIManager guiMgr;
 }
 
 #endif /* game_h */

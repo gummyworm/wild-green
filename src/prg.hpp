@@ -22,7 +22,7 @@ using namespace ci::app;
 class PRG : public WidgetWindow{
 protected:
 public:
-    PRG(string name="", string icon=""):WidgetWindow(name) {}
+    PRG(string name="", string icon="", int w=240, int h=160):WidgetWindow(name, w, h) {}
 };
 
 class PRGLauncher : public Widget {
@@ -33,12 +33,17 @@ protected:
     
     string name;
     vector<shared_ptr<PRG>> instances;
+    
+    Timer doubleClickTimer;
+    bool grabbed;
+    ivec2 grabOffset;
 
 public:
     PRGLauncher(string name, string icon="");
     void draw() override;
-    virtual void launch(shared_ptr<PRG> instance) {instances.push_back(instance);}
+    virtual void launch() {}
     void onMouseDown(MouseEvent event) override;
+    void onMouseUp(MouseEvent event) override;
     void onMouseDrag(MouseEvent event) override;
     void onAccept(MouseEvent event, shared_ptr<class Entity> e) override;
 };

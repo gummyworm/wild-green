@@ -13,10 +13,15 @@ Conversation::Conversation()
 {
 }
 
-void Conversation::say(shared_ptr<SpeechBubble> speaker, string msg)
+void Conversation::say(shared_ptr<SpeechBubble> speaker, shared_ptr<SpeechBubble> listener, string msg)
 {
     auto s = find(speakers.begin(), speakers.end(), speaker);
-    (*s)->say(msg);
+    s->get()->say(msg);
+}
+
+void Conversation::say(shared_ptr<SpeechBubble> speaker, string msg)
+{
+    say(speaker, nullptr, msg);
 }
 
 void Conversation::addSpeaker(shared_ptr<SpeechBubble> speaker)

@@ -17,6 +17,7 @@
 #include "combat.hpp"
 #include "properties.h"
 #include "game.h"
+#include "cinder/objloader.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -36,7 +37,8 @@ public:
      void resize() override;
      void update() override;
      void draw() override;
-     bool pick(Entity *e, vec3 *pickedPoint, vec3 *pickedNormal);
+     
+     gl::BatchRef mCubeRef;
 };
 
 digitalApp::digitalApp()
@@ -48,6 +50,7 @@ void digitalApp::setup()
 {
      //getWindow()->setBorderless();
      setWindowSize(640, 480);
+     hideCursor();
      game::setup();
      
 }
@@ -60,6 +63,11 @@ void digitalApp::mouseDown(MouseEvent event)
 
 void digitalApp::mouseMove(MouseEvent event)
 {
+     if(getWindowBounds().contains(event.getPos()))
+        hideCursor();
+     else
+        showCursor();
+     
      event.setPos(mouseToScreen(event.getPos()));
      game::onMouseMove(event);
      

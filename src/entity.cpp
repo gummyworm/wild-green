@@ -10,10 +10,12 @@
 #include "cinder/ObjLoader.h"
 #include "properties.h"
 #include "game.h"
+#include "cinder/AxisAlignedBox.h"
 
 using namespace ci;
 using namespace cinder;
 using namespace ci::app;
+
 
 void Entity::setupShaders()
 {
@@ -24,46 +26,60 @@ void Entity::setupShaders()
     shaders.shadow = gl::getStockShader(gl::ShaderDef().lambert().texture());
 }
 
-Entity::Entity(string name, const fs::path &model, const fs::path &vert, const fs::path &frag)
+Entity::Entity(string name, const fs::path &model, gl::GlslProgRef prog)
 :name(name),
 pos(vec3(0)),
 scale(vec3(1)),
 rotation(vec3(0)),
 memoryUse(64),
 hp(100),
-maxHp(100)
+maxHp(100),
+highlightColor(properties::highlightColor)
 {
-    gl::GlslProgRef shader;
+    flags.hasGravity = true;
+    flags.grabbable = true;
+    flags.solid = true;
+    flags.movable = true;
+    flags.highlight = false;
     
-    if(vert.empty() || frag.empty()) {
-        shader = gl::getStockShader(gl::ShaderDef().lambert().color());
-    } else {
-        shader = gl::GlslProg::create(loadAsset(vert), loadAsset(frag));
-    }
- 
+    if(prog == nullptr)
+        prog = gl::getStockShader( gl::ShaderDef().lambert().color());
+    
     if(model.empty()) {
-        mesh = geom::Cube();
-        batch = gl::Batch::create(mesh, shader);
+        mesh = TriMesh::create(geom::Cube());
+        batch = gl::Batch::create(*mesh, prog);
+        aabb = mesh->calcBoundingBox();
     } else {
-        mesh.create(ObjLoader(loadAsset(model)));
-        batch = gl::Batch::create(mesh, shader);
+        ObjLoader ol(loadAsset(model));
+        mesh = TriMesh::create(ol);
+        aabb = mesh->calcBoundingBox();
+        batch = gl::Batch::create(ol, gl::getStockShader( gl::ShaderDef().lambert().color() ) );
     }
-
+    
     setupShaders();
     shadow.fbo = gl::Fbo::create(properties::screenWidth, properties::screenHeight);
-    scale = vec3(.1f);
+    font = gl::TextureFont::create(Font(properties::entityLabelFont));
 }
+
+
 
 void Entity::render(Camera cam)
 {
     //glm::rotate(rotation.x, vec3(1, 0, 0));
     //glm::rotate(rotation.y, vec3(0, 1, 0));
     //glm::rotate(rotation.z, vec3(0, 0, 1));
-
+    
     gl::pushModelMatrix();
     gl::setMatrices(cam);
-    gl::setModelMatrix(transform);
 
+    //gl::setModelMatrix(transform);
+    gl::translate(pos);
+    gl::scale(scale);
+    
+    if(flags.highlight)
+        gl::color(highlightColor);
+    else
+        gl::color(ColorA(1,0,0,1));
     batch->draw();
     for(auto e : children)
         e->draw(cam);
@@ -73,7 +89,6 @@ void Entity::render(Camera cam)
 void Entity::draw(Camera cam)
 {
     render(cam);
-    gl::color(ColorA(1,0,0,1));
     if(shadow.draw) {
         gl::setMatricesWindow(properties::screenSize);
         shaders.shadow->bind();
@@ -87,6 +102,7 @@ void Entity::draw(Camera cam)
                           vec2(shadow.texcos.x1, shadow.texcos.y1),
                           vec2(shadow.texcos.x2, shadow.texcos.y2));
         shadow.fbo->unbindTexture();
+        gl::disable(GL_TEXTURE_2D);
     }
 }
 
@@ -97,21 +113,41 @@ void Entity::onResize()
 
 void Entity::label(Camera cam)
 {
-    if(!shadow.draw)
+    if(cam.worldToEyeDepth(pos) > 0)
         return;
-    
-    vec2 scr = cam.worldToScreen(pos*scale, properties::screenWidth, properties::screenHeight);
-    scr.y -= 64;
     
     gl::pushModelMatrix();
     gl::setMatricesWindow(properties::screenSize);
     
+    string memStr = to_string(memoryUse) + "B";
+    
+    vec2 size1 = font->measureString(name);
+    vec2 size2 = font->measureString(memStr);
+    
+    vec2 line1 = cam.worldToScreen(aabb.getMax()*scale + pos, properties::screenWidth, properties::screenHeight) - vec2(0, size1.y+size2.y);
+    
+    vec2 line2 = line1 + vec2(0, size1.y);
+    Rectf rect(line1.x, line1.y-size1.y, line1.x+size1.x, line2.y);
+    
     shaders.ui->bind();
-    gl::drawString(name + to_string(memoryUse), scr, ColorA(1,0.2f,0.4f,1.0f), Font("Arial", 32));
+    
+    gl::color(properties::speechboxBorderColor);
+    gl::drawStrokedRect(rect, properties::speechboxBorderWidth);
+    gl::color(properties::labelColor);
+    //gl::drawSolidRect(rect);
+    gl::drawSolidRoundedRect(rect, 0);
+    gl::color(properties::labelTextColor);
+    font->drawString(name, line1);
+    font->drawString(memStr, line2);
     for(auto e : children)
         e->label(cam);
     
     gl::popModelMatrix();
+}
+
+void Entity::say(string text)
+{
+    game::say(this, text);
 }
 
 void Entity::addAction(string name, function<void()> fn)
@@ -126,7 +162,7 @@ void Entity::setDrawState(EntityDrawState state)
 
 void Entity::onMouseDown(MouseEvent event, Camera cam)
 {
-    AxisAlignedBox aabb = mesh.calcBoundingBox(transform);
+    auto aabb = this->aabb.transformed(transform);
     vec3 min = aabb.getMin();
     vec3 max = aabb.getMax();
     vec3 pts[] = {
@@ -158,10 +194,8 @@ void Entity::onMouseDown(MouseEvent event, Camera cam)
     
     shadow.pos = ivec2(screenMin.x, screenMin.y);
     shadow.dim = ivec2(screenMax.x - screenMin.x, screenMax.y - screenMin.y);
-
+    
     //render the "shadow" to be dragged
-    gl::enableDepthWrite();
-    gl::enableDepthRead();
     shadow.fbo->bindFramebuffer();
     
     shadow.texcos.x1 = screenMin.x / properties::screenWidth;
@@ -169,17 +203,21 @@ void Entity::onMouseDown(MouseEvent event, Camera cam)
     shadow.texcos.x2 = screenMax.x / properties::screenWidth;
     shadow.texcos.y2 = 1.0f - (screenMax.y / properties::screenHeight);
     
-    cout << vec2(shadow.texcos.x1, shadow.texcos.y1) << "  MAX: " << vec2(shadow.texcos.x2, shadow.texcos.y2) << endl;
-
     shadow.grabbedOffset = screenMin - vec2(event.getPos());
     
     gl::clear(ColorA(0,0,0,0));
-    render(cam);
     gl::disableDepthRead();
     gl::disableDepthWrite();
-
+    render(cam);
     shadow.fbo->unbindFramebuffer();
     shadow.draw = true;
+    gl::enableDepthRead();
+    gl::enableDepthWrite();
+}
+
+void Entity::onMouseMove(MouseEvent event)
+{
+    
 }
 
 void Entity::onMouseDragged(MouseEvent event)
@@ -191,31 +229,17 @@ void Entity::onMouseDragged(MouseEvent event)
 
 void Entity::onMouseUp(MouseEvent event)
 {
-    if(shadow.draw == false)
-        return;
-    
-    gl::setMatricesWindow(properties::screenWidth, properties::screenHeight);
-    //mat4 proj = gl::context()->getProjectionMatrixStack().back() * gl::context()->getViewMatrixStack().back();
-    mat4 proj = mainCam.getProjectionMatrix();
-    vec4 viewport = vec4(0, 0, properties::screenWidth, -properties::screenHeight);
-    
-    float x = event.getX();
-    float y = properties::screenHeight - event.getY();
-    vec3 p = screenToWorld(event.getPos(), 0.0f);
-    
-    cout << p << endl;
-    setPos(p);
     shadow.draw = false;
 }
 
 void Entity::update()
 {
-    //if(!flags.hasGravity || flags.grounded)
-        //return;
     transform = mat4(1.0f);
-    transform *= glm::scale(scale);
     transform *= glm::translate(pos);
+    transform *= glm::scale(scale);
 
+    if(!flags.hasGravity || flags.grounded)
+        return;
     if(pos.y > 0)
         pos.y -= FALL_SPEED;
     if(pos.y < 0)

@@ -18,7 +18,13 @@ batch(batch)
     
     cam.lookAt(vec3(0.0f, 0.0f, -1.0f), vec3(0.0f, 0.0f, 0.0f));
     cam.setEyePoint(vec3(0.0f, 0.0f, -10.0f));
-    cam.setPerspective(40.0f, getWindowAspectRatio(), 0.01f, 100.0f);
+    cam.setPerspective(40.0f, getAspectRatio(), 0.01f, 100.0f);
+}
+
+void Inspector::resize(ivec2 dim)
+{
+    PRG::resize(dim);
+    cam.setPerspective(40.0f, getAspectRatio(), 0.01f, 100.0f);
 }
 
 void Inspector::draw()

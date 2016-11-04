@@ -8,10 +8,12 @@
 
 #include "fileviewer.hpp"
 #include "entity.hpp"
+#include "game.h"
 #include "properties.h"
 
 FileViewerWin::FileViewerWin(string name)
-:PRG(name)
+:PRG(name),
+files()
 {
     shared_ptr<File> f(new File("test", "geos-kernal.png"));
     addFile(f);
@@ -67,12 +69,11 @@ FileViewer::FileViewer()
 
 void FileViewer::launch()
 {
-    PRGLauncher::launch(shared_ptr<FileViewerWin>(new FileViewerWin(name)));
+    game::guiMgr.addWidget(new FileViewerWin(name));
+    //instances.push_back(shared_ptr<FileViewerWin>(new FileViewerWin(name)));
 }
 
 void FileViewer::onMouseDown(MouseEvent event)
 {
     PRGLauncher::onMouseDown(event);
-    if(getRect().contains(event.getPos()))
-        launch();
 }

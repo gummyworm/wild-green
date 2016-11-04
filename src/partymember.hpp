@@ -16,21 +16,53 @@
 #include "widget.hpp"
 #include "speechbubble.hpp"
 #include "conversation.hpp"
+#include "contextmenu.hpp"
+#include "overlay.hpp"
+#include "properties.h"
+#include "entity.hpp"
 
 using namespace ci;
 using namespace std;
 
 class PartyMember : public Widget {
+protected:
+    class Hand : public Overlay {
+        int bobFrame;
+    public:
+        Hand(const fs::path image="", Rectf rect=Rectf())
+        :Overlay(image, rect),
+        bobFrame(0)
+        {
+        }
+        
+        void onMove(vec3 dir, vec3 vel);
+    } hand;
+    
     string name;
     gl::TextureRef portrait;
-    SpeechBubble speech;
     
+    vector<unique_ptr<SpeechBubble>> speechBubbles;
+    ContextMenu combatActions;
+    
+    shared_ptr<Conversation> convo;
+    shared_ptr<Entity> entity;
 public:
-    PartyMember(string name, const fs::path portrait);
+    PartyMember(shared_ptr<Entity> e, string name, const fs::path portrait, const fs::path handImg="");
     
-    void draw();
-    void joinConversation(Conversation *convo);
+    void draw() override;
+    void onMouseDown(MouseEvent event) override;
+    void onMouseUp(MouseEvent event) override;
+    void onMouseDrag(MouseEvent event) override;
+
+    void joinConversation(shared_ptr<Conversation> convo);
     void say(string msg);
+    
+    void onMove(vec3 dir, vec3 vel) {hand.onMove(dir, vel);}
+    
+    void setHandPos(ivec2 pos) {hand.setPos(pos);}
+    ivec2 getHandPos() {return hand.getPos();}
+    
+    shared_ptr<ContextMenu> getCombatMenu() {return shared_ptr<ContextMenu>(&combatActions);}
 };
 
 #endif /* partymember_hpp */

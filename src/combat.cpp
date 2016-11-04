@@ -11,35 +11,44 @@
 #include "gui.h"
 #include "properties.h"
 
+using namespace std;
 
 CombatLauncher::CombatLauncher(shared_ptr<Entity> e)
-:PRGLauncher("FIGHT"),
+:PRGLauncher("FIGHT", "swordicon.png"),
 entity(e)
 {
 }
 
 void CombatLauncher::launch()
 {
-    PRGLauncher::launch(shared_ptr<Combat>(new Combat(entity)));
+    game::guiMgr.addWidget(new Combat(entity));
 }
 
 void CombatLauncher::onMouseDown(MouseEvent event)
 {
     PRGLauncher::onMouseDown(event);
-    if(getRect().contains(event.getPos()))
-        launch();
 }
 
+void CombatLauncher::onAccept(MouseEvent event, shared_ptr<class Entity> e)
+{
+    game::guiMgr.addWidget(new Combat(entity));
+}
 
 Combat::Combat(shared_ptr<Entity> e)
 :PRG("FIGHT!"),
-entity(e)
+entity(e),
+combatMenu()
 {
     fbo = gl::Fbo::create(512, 512);
     
     cam.lookAt(vec3(0.0f, 0.0f, -1.0f), vec3(0.0f, 0.0f, 0.0f));
     cam.setEyePoint(vec3(0.0f, 0.0f, -10.0f));
-    cam.setPerspective(40.0f, getWindowAspectRatio(), 0.01f, 100.0f);
+    cam.setPerspective(40.0f, getInternalRect().getWidth() / getInternalRect().getHeight(), 0.01f, 100.0f);
+    
+    combatMenu.addItem("HIT", [](){});
+    combatMenu.addItem("SPELL", [](){});
+    combatMenu.addItem("SPEAK", [](){});
+    combatMenu.setVisible(false);
 }
 
 void Combat::draw()
@@ -54,7 +63,6 @@ void Combat::draw()
     gl::setMatrices(cam);
     gl::clear(ColorA(1,0,0,1));
     gl::color(0,1,0);
-    gl::setModelMatrix(transform);
     entity->getBatch()->draw();
     
     gl::setMatricesWindow(properties::screenSize);
@@ -72,13 +80,32 @@ void Combat::draw()
     gl::drawSolidRect(healthBar);
     
     fbo->unbindFramebuffer();
+    
     gl::draw(fbo->getColorTexture(), getInternalRect());
-
+    
+    combatMenu.draw();
     gl::color(1,0,1);
     gl::popMatrices();
 }
 
-void Combat::onMouseDown()
+void Combat::onMouseDown(MouseEvent event)
 {
-    
+    vec3 pt, normal;
+    WidgetWindow::onMouseDown(event);
+    if(!game::pick(entity.get(), this, event.getPos() - getInternalPos2D(), &pt, &normal))
+        return;
+    combatMenu.setPos(event.getPos());
+    combatMenu.onMouseDown(event);
+}
+
+void Combat::onMouseDrag(MouseEvent event)
+{
+    WidgetWindow::onMouseDrag(event);
+    combatMenu.onMouseDrag(event);
+}
+
+void Combat::onMouseUp(MouseEvent event)
+{
+    combatMenu.onMouseUp(event);
+    WidgetWindow::onMouseUp(event);
 }

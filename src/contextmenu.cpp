@@ -14,14 +14,19 @@ using namespace std;
 
 ContextMenu::ContextMenu()
 :Widget(),
-highlightColor(0.8f,0.8f,0.8f)
+highlightColor(0.8f,0.8f,0.8f,1.0f)
 {
 
 }
 
 void ContextMenu::addItem(string name, function<void()> callback)
 {
-    actions.push_back(make_pair(name, callback));
+    items.push_back(MenuItem(name, callback));
+}
+
+void ContextMenu::addItem(string name, shared_ptr<ContextMenu> submenu)
+{
+    items.push_back(MenuItem(name, submenu));
 }
 
 void ContextMenu::draw()
@@ -30,33 +35,30 @@ void ContextMenu::draw()
         return;
     
     Rectf rect = getRect();
+    float bot = rect.y2;
     
     gl::pushMatrices();
     gl::setMatricesWindow(properties::screenSize);
-    gl::color(bgColor);
-    gl::drawSolidRect(rect);
-    
-    rect.y2 = rect.y1 + fontSize;
 
+    rect.y2 = rect.y1 + fontSize;
     vec2 p = vec2(pos);
-    int i = 0;
-    for(auto a : actions) {
-        if(p.y > rect.y2)
+    
+    for(int i = 0; i < items.size(); ++i) {
+        auto a = items[i];
+        if((p.y+fontSize) > bot)
             break;
-        
+
         if(i == highlightedItem)
             gl::color(highlightColor);
         else
             gl::color(bgColor);
-        
+    
         gl::drawSolidRect(rect);
-        gl::drawString(a.first, p, fontColor);
+        gl::drawString(a.getName(), p, fontColor);
         
         p.y += fontSize;
-        rect.y1 = p.y;
-        rect.y2 = p.y + fontSize;
-        
-        i++;
+        rect.y1 += fontSize;
+        rect.y2 += fontSize;
     }
     
     gl::color(ColorA::white());
@@ -68,7 +70,7 @@ int ContextMenu::itemOffset(int y)
     if(offset < 0 || offset > dim.y)
         return -1;
     int choice = offset / fontSize;
-    if(choice < actions.size())
+    if(choice < items.size())
         return choice;
     return -1;
 }
@@ -88,8 +90,11 @@ void ContextMenu::onMouseUp(MouseEvent event)
     setVisible(false);
     vec2 mousePos = event.getPos();
     int choice = itemOffset(mousePos.y);
-    if(choice >= 0)
-        actions[choice].second();
+    if(choice >= 0) {
+        auto a = items[choice].getAction();
+        if(a != nullptr)
+            a();
+    }
 }
 
 void ContextMenu::onMouseDrag(MouseEvent event)

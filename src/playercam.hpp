@@ -24,11 +24,19 @@ class PlayerCam : public CameraPersp {
     float moveSpeed;
     float turnSpeed;
     void update();
+    
+    AxisAlignedBox aabb;
 public:
     PlayerCam(float aspectRatio = properties::aspectRatio);
     void onKeyDown(KeyEvent event);
     void onMouseMove(MouseEvent event);
     void onResize();
+    
+    vec3 getDir() {return viewDir;}
+    vec3 getPos() {return viewPos;}
+    AxisAlignedBox getAABB() {return aabb;}
+    
+    void setPos(vec3 p) {viewPos = p; update();}
 };
 
 

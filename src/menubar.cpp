@@ -8,29 +8,23 @@
 
 #include "menubar.hpp"
 
-void MenuBar::Submenu::draw()
+void MenuBar::addSubmenu(Menu m)
 {
-    
-}
-
-void MenuBar::addSubmenu(string name)
-{
-    menus.push_back(Submenu(name));
-    Submenu *m = &menus[menus.size()-1];
-    
+    // set the rect of the menu to follow the previous item
     if(menus.size() > 1) {
-        Submenu *prevMenu = &menus[menus.size()-2];
-        m->rect = prevMenu->rect;
-        m->rect.x1 += prevMenu->name.length() * 12;
-        m->rect.x2 += prevMenu->name.length() * 12;
+        Menu *prevMenu = &menus[menus.size()-2];
+        m.rect = prevMenu->rect;
+        m.rect.x1 += prevMenu->name.length() * 12;
+        m.rect.x2 += prevMenu->name.length() * 12;
     } else {
-        m->rect = Rectf(0, 0, m->name.length() * 12, height);
+        m.rect = Rectf(0, 0, m.name.length() * 12, height);
     }
+    menus.push_back(m);
 }
 
 void MenuBar::addItem(string submenu, string name, function<void()> callback)
 {
-    Submenu *sm = nullptr;
+    Menu *sm = nullptr;
     
     for(auto m : menus) {
         if(m.name.compare(submenu) == 0) {

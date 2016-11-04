@@ -10,12 +10,13 @@
 #define contextmenu_hpp
 
 #include <string>
-#include "widget.hpp"
+#include "menu.hpp"
 
 using namespace std;
 
 class ContextMenu : public Widget {
-    vector<pair<string, function<void()>>> actions;
+protected:
+    vector<MenuItem> items;
     ColorA hoverColor;
     ColorA highlightColor;
     int highlightedItem;
@@ -24,13 +25,13 @@ class ContextMenu : public Widget {
 public:
     ContextMenu();
     void addItem(string name, function<void()> callback);
+    void addItem(string name, shared_ptr<ContextMenu> submenu);
     void draw() override;
     
     void onMouseDown(MouseEvent event) override;
     void onMouseUp(MouseEvent event) override;
     void onMouseMove(MouseEvent event) override;
     void onMouseDrag(MouseEvent event) override;
-
 };
 
 #endif /* contextmenu_hpp */

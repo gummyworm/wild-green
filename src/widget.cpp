@@ -9,24 +9,15 @@
 #include "widget.hpp"
 #include "properties.h"
 
-Widget::Widget()
+Widget::Widget(int width, int height)
 :dim(100,100),
-pos(0,0,0),
+pos(20,20,0),
 fontSize(32),
 fontColor(1,0,1,1),
-bgColor(0.5f,0.5f,0.5),
+bgColor(0.5f,0.5f,0.5f,1.0f),
+minDim(32,32),
+maxDim(640,480),
 show(true)
-{
-}
-
-Widget::Widget(int width, int height)
-:dim(width, height)
-{
-}
-
-Widget::Widget(Rectf bounds)
-:pos(bounds.x1, bounds.y1, 0),
-dim(bounds.getWidth(), bounds.getHeight())
 {
 }
 
@@ -36,13 +27,24 @@ void Widget::setPos(ivec2 pos)
     this->pos.y = pos.y;
 }
 
-void Widget::resize(ivec2 size)
-{
-    dim.x = size.x;
-    dim.y = size.y;
-}
-
 Rectf Widget::getRect()
 {
     return Rectf(pos.x, pos.y, pos.x+dim.x, pos.y+dim.y);
+}
+
+void Widget::pullToFront()
+{
+    pos.z = numZLevels;
+}
+
+void Widget::pushDown()
+{
+    pos.z++;
+}
+
+void Widget::onMouseDown(MouseEvent event)
+{
+    if(getRect().contains(event.getPos())) {
+        pullToFront();
+    }
 }
