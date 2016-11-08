@@ -22,8 +22,10 @@ void NPC::say(string msg)
 
 void NPC::label(Camera cam)
 {
-    for(auto& s : speechBubbles)
+    for(auto& s : speechBubbles) {
         s->draw();
+        s->apply();
+    }
 }
 
 void NPC::update()

@@ -118,7 +118,7 @@ void WidgetWindow::Scrollbar::onMouseDown(MouseEvent event, Rectf winRect)
 }
 
 WidgetWindow::WidgetWindow(string name, int width, int height)
-:Widget(width, height),
+:Widget(nullptr, width, height),
 title(name),
 grabbed(false),
 resizing(false),
@@ -135,53 +135,64 @@ vScroll(false)
     bringFrontIcon = gl::Texture::create(loadImage(loadAsset("bringfronticon.png")));
 }
 
-void WidgetWindow::onMouseDown(MouseEvent event)
+bool WidgetWindow::onMouseDown(MouseEvent event)
 {
+    Widget::onMouseDown(event);
+    
+    Rectf grabRect(vec2(), vec2(dim.x, title.height));
+    
     vec2 mousePos = event.getPos();
+    vec2 mouseRel = mousePos - vec2(getPos2D());
     
     // check close
-    if(closeButton.contains(mousePos)) {
-        setVisible(false);
-        return;
+    if(closeButton.contains(mouseRel)) {
+        game::guiMgr.remove(this);
+        return true;
     }
     // check scroll bar(s)
     vScroll.onMouseDown(event, getRect());
     hScroll.onMouseDown(event, getRect());
     
     // check bring front
-    if(getBringFrontRect(getRect()).contains(mousePos)) {
+    if(getBringFrontRect(getRect()).contains(mouseRel)) {
         game::guiMgr.bringFront(this);
+        return true;
     }
     
     // check if grab
-    if(mousePos.y >= pos.y && mousePos.y <= (pos.y + title.height) &&
-       mousePos.x >= pos.x && mousePos.x <= (pos.x + dim.x)) {
+    if(grabRect.contains(mouseRel)) {
         prevMouse = mousePos;
         grabbed = true;
-        
+        return true;
     } else {
         grabbed = false;
     }
     
     // check resize
-    if(getResizeRect(getRect()).contains(mousePos)) {
+    if(getResizeRect(getRect()).contains(mouseRel)) {
         prevMouse = mousePos;
         resizing = true;
+        return true;
     } else {
         resizing = false;
     }
+    
+    return false;
 }
 
-void WidgetWindow::onMouseUp(MouseEvent event)
+bool WidgetWindow::onMouseUp(MouseEvent event)
 {
     grabbed = false;
+    resizing = false;
+    return Widget::onMouseUp(event);
 }
 
-void WidgetWindow::onMouseMove(MouseEvent event)
+bool WidgetWindow::onMouseMove(MouseEvent event)
 {
+    return Widget::onMouseMove(event);
 }
 
-void WidgetWindow::onMouseDrag(MouseEvent event)
+bool WidgetWindow::onMouseDrag(MouseEvent event)
 {
     if(resizable && resizing) {
         dim.x += event.getX() - prevMouse.x;
@@ -197,19 +208,24 @@ void WidgetWindow::onMouseDrag(MouseEvent event)
             dim.y = minDim.y;
         
         prevMouse = event.getPos();
+        return true;
     }
     
-    if(!grabbed)
-        return;
+    if(!grabbed) {
+        return false;
+    }
     
-    vec2 mousePos = event.getPos();
-    this->pos.x += mousePos.x - prevMouse.x;
-    this->pos.y += mousePos.y - prevMouse.y;
-    closeButton.x1 = pos.x + closeButtonOffset.x;
-    closeButton.y1 = pos.y + closeButtonOffset.y;
-    closeButton.x2 = pos.x + closeButtonOffset.x + 7;
-    closeButton.y2 = pos.y + closeButtonOffset.y + 7;
-    prevMouse = event.getPos();
+    ivec2 mousePos = event.getPos();
+    int dx = mousePos.x - prevMouse.x;
+    int dy = mousePos.y - prevMouse.y;
+    setPos(getPos() + ivec3(dx, dy, 0));
+    
+    closeButton.x1 = closeButtonOffset.x;
+    closeButton.y1 = closeButtonOffset.y;
+    closeButton.x2 = closeButtonOffset.x + 7;
+    closeButton.y2 = closeButtonOffset.y + 7;
+    prevMouse = mousePos;
+    return true;
 }
 
 
@@ -220,26 +236,21 @@ void WidgetWindow::setTitle(string title)
 
 void WidgetWindow::draw()
 {
+    Widget::draw();
     if(!show)
         return;
     
-    gl::pushMatrices();
-    gl::setMatricesWindow(properties::screenSize);
-    
-    vec2 titleLoc = vec2(pos.x + (dim.x/2), pos.y + 2);
+    vec2 titleLoc = vec2((dim.x/2), 2);
     Rectf titleRect = getRect();
     titleRect.y2 = titleRect.y1 + title.height;
     
-    gl::color(1,0,0);
-    gl::color(gui::windowBorderColor);
+    gl::color(1,0,0,1);
     
-    float bw = gui::windowBorderWidth;
-    gl::drawSolidRect(getRect() + Rectf(-bw, -bw, bw, bw));
     gl::color(gui::windowBgColor);
     gl::drawSolidRect(getRect());
-    gl::color(0,0,1);
+    gl::color(0,0,1,1);
     gl::drawSolidRect(titleRect);
-    gl::color(1,1,1);
+    gl::color(1,1,1,1);
     gl::drawSolidRect(closeButton);
     gl::drawString(title.text, titleLoc);
     
@@ -249,10 +260,11 @@ void WidgetWindow::draw()
     
     gl::draw(bringFrontIcon, getBringFrontRect(getRect()));
     
-    gl::popMatrices();
-    
     hScroll.draw(getRect());
     vScroll.draw(getRect());
+    
+    gl::color(1,1,1,1);
+    
     /*
     if(true) {  //virtualSize.x > getRect().getWidth()) {
         hScroll.draw(getRect());
@@ -265,6 +277,5 @@ void WidgetWindow::draw()
 
 Rectf WidgetWindow::getInternalRect()
 {
-    Rectf rect = getRect();
-    return Rectf(rect.x1, rect.y1 + title.height, rect.x2, rect.y2);
+    return getRect() + Rectf(0, title.height, 0, 0);
 }

@@ -8,53 +8,57 @@
 
 #include "partymember.hpp"
 #include "properties.h"
+#include "game.h"
+
 using namespace ci;
 using namespace ci::app;
 
 PartyMember::PartyMember(shared_ptr<Entity> e, string name, const fs::path portrait, const fs::path handImage)
-:Widget(32,64),
+:Widget(nullptr, 32, 64),
 name(name),
 hand(handImage, properties::playerHandRect)
 {
-    Rectf rect = getRect();
     this->portrait = gl::Texture::create(loadImage(loadAsset(portrait)));
     this->portrait->setMinFilter(GL_NEAREST);
     this->portrait->setMagFilter(GL_NEAREST);
-    rect = Rectf(50,50,100,100);
-    
     this->entity = entity;
 }
 
 void PartyMember::draw()
 {
+    Widget::draw();
     // draw the portrait
-    Rectf rect = getRect();
     gl::color(1, 1, 1);
-    gl::draw(portrait, rect);
+    gl::draw(portrait, vec2());
     gl::color(1, 0, 0);
-    gl::drawString(name, vec2(rect.x1, rect.y1 - fontSize), fontColor, properties::font);
+    gl::drawString(name, vec2(0,  -fontSize), fontColor, properties::font);
     
     // draw speech bubble
-    for(auto& s : speechBubbles)
+    for(auto& s : speechBubbles) {
         s->draw();
+        s->apply();
+    }
     
     // draw the hand
     hand.draw();
 }
 
-void PartyMember::onMouseDown(MouseEvent event)
+bool PartyMember::onMouseDown(MouseEvent event)
 {
-    if(getRect().contains(event.getPos())) {
+    if(contains(event.getPos())) {
         if(event.isRight())
             speechBubbles = vector<unique_ptr<SpeechBubble>>();
         else
             say("Hello!");
+        return true;
     }
     
     if(event.isRight()) {
         for(auto& s : speechBubbles) {
-            if(s->getRect().contains(event.getPos()))
+            if(contains(event.getPos())) {
                 s->setVisible(false);
+                return true;
+            }
         }
         /* TODO: delete from vector
         std::remove_if(speechBubbles.begin(), speechBubbles.end(),
@@ -64,23 +68,31 @@ void PartyMember::onMouseDown(MouseEvent event)
                                     });
          */
     } else {
-        for(auto& s : speechBubbles)
-            s->onMouseDown(event);
+        for(auto& s : speechBubbles) {
+            if(s->onMouseDown(event))
+                return true;
+        }
     }
+    
+    return false;
 }
 
-void PartyMember::onMouseUp(MouseEvent event)
+bool PartyMember::onMouseUp(MouseEvent event)
 {
     for(auto& s : speechBubbles) {
-        s->onMouseUp(event);
+        if(s->onMouseUp(event))
+            return true;
     }
+    return false;
 }
 
-void PartyMember::onMouseDrag(MouseEvent event)
+bool PartyMember::onMouseDrag(MouseEvent event)
 {
     for(auto& s : speechBubbles) {
-        s->onMouseDrag(event);
+        if(s->onMouseDrag(event))
+            return true;
     }
+    return false;
 }
 
 void PartyMember::joinConversation(shared_ptr<Conversation> convo)
@@ -92,8 +104,8 @@ void PartyMember::joinConversation(shared_ptr<Conversation> convo)
 void PartyMember::say(string msg)
 {
     auto s = unique_ptr<SpeechBubble2>(new SpeechBubble2(this, msg, entity.get()));
-    s->say(msg);
-    speechBubbles.push_back(move(s));
+    game::speechMgr.say(move(s));
+    //speechBubbles.push_back(move(s));
 }
 
 void PartyMember::Hand::onMove(vec3 dir, vec3 vel)

@@ -24,14 +24,15 @@ void CombatLauncher::launch()
     game::guiMgr.addWidget(new Combat(entity));
 }
 
-void CombatLauncher::onMouseDown(MouseEvent event)
+bool CombatLauncher::onMouseDown(MouseEvent event)
 {
-    PRGLauncher::onMouseDown(event);
+    return PRGLauncher::onMouseDown(event);
 }
 
-void CombatLauncher::onAccept(MouseEvent event, shared_ptr<class Entity> e)
+bool CombatLauncher::onAccept(MouseEvent event, shared_ptr<class Entity> e)
 {
     game::guiMgr.addWidget(new Combat(entity));
+    return true;
 }
 
 Combat::Combat(shared_ptr<Entity> e)
@@ -53,9 +54,9 @@ combatMenu()
 
 void Combat::draw()
 {
+    WidgetWindow::draw();
     if(!show)
         return;
-    WidgetWindow::draw();
     
     gl::pushMatrices();
     
@@ -65,9 +66,8 @@ void Combat::draw()
     gl::color(0,1,0);
     entity->getBatch()->draw();
     
-    gl::setMatricesWindow(properties::screenSize);
-    
     // draw the UI: name, health bar, status, etc.
+    gl::setMatricesWindow(properties::screenSize);
     Rectf healthBg = gui::COMBAT_HEALTHBAR;
     Rectf healthBar = healthBg;
     healthBar.x2 = gui::COMBAT_HEALTHBAR.x2 * entity->getHP() / entity->getMaxHP();
@@ -81,31 +81,39 @@ void Combat::draw()
     
     fbo->unbindFramebuffer();
     
+    gl::popMatrices();
     gl::draw(fbo->getColorTexture(), getInternalRect());
     
     combatMenu.draw();
-    gl::color(1,0,1);
-    gl::popMatrices();
+    combatMenu.apply();
+    gl::color(1,1,1,1);
 }
 
-void Combat::onMouseDown(MouseEvent event)
+bool Combat::onMouseDown(MouseEvent event)
 {
     vec3 pt, normal;
-    WidgetWindow::onMouseDown(event);
+    ivec2 mouseRel = getPos2D() - event.getPos();
+    if(WidgetWindow::onMouseDown(event))
+        return true;
+    
     if(!game::pick(entity.get(), this, event.getPos() - getInternalPos2D(), &pt, &normal))
-        return;
-    combatMenu.setPos(event.getPos());
-    combatMenu.onMouseDown(event);
+        return false;
+    
+    combatMenu.setPos(mouseRel);
+    return combatMenu.onMouseDown(event);
 }
 
-void Combat::onMouseDrag(MouseEvent event)
+bool Combat::onMouseDrag(MouseEvent event)
 {
-    WidgetWindow::onMouseDrag(event);
-    combatMenu.onMouseDrag(event);
+    if(WidgetWindow::onMouseDrag(event))
+        return true;
+    
+    return combatMenu.onMouseDrag(event);
 }
 
-void Combat::onMouseUp(MouseEvent event)
+bool Combat::onMouseUp(MouseEvent event)
 {
-    combatMenu.onMouseUp(event);
-    WidgetWindow::onMouseUp(event);
+    if(WidgetWindow::onMouseUp(event))
+        return true;
+    return combatMenu.onMouseUp(event);
 }

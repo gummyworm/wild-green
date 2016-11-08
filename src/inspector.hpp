@@ -33,7 +33,7 @@ public:
     void setBatch(gl::Batch batch) {batch = batch;}
     void draw() override;
     void resize(ivec2 dim) override;
-    void onKeydown(KeyEvent event) override;
+    bool onKeydown(KeyEvent event) override;
 };
 
 #endif /* inspector_hpp */

@@ -36,6 +36,7 @@ hp(100),
 maxHp(100),
 highlightColor(properties::highlightColor)
 {
+    flags.enabled = true;
     flags.hasGravity = true;
     flags.grabbable = true;
     flags.solid = true;
@@ -162,6 +163,12 @@ void Entity::setDrawState(EntityDrawState state)
 
 void Entity::onMouseDown(MouseEvent event, Camera cam)
 {
+    generateShadow();
+    shadow.grabbedOffset = shadow.pos - event.getPos();
+}
+
+void Entity::generateShadow()
+{
     auto aabb = this->aabb.transformed(transform);
     vec3 min = aabb.getMin();
     vec3 max = aabb.getMax();
@@ -175,12 +182,12 @@ void Entity::onMouseDown(MouseEvent event, Camera cam)
         vec3(max.x, max.y, min.z),
         vec3(max.x, max.y, max.z)
     };
-    
+
     vec2 screenMin(INFINITY, INFINITY);
     vec2 screenMax(-INFINITY, -INFINITY);
     
     for(auto p : pts) {
-        vec2 xy = cam.worldToScreen(p, properties::screenWidth, properties::screenHeight); //getWindowWidth(), getWindowHeight());
+        vec2 xy = mainCam.worldToScreen(p, properties::screenWidth, properties::screenHeight); //getWindowWidth(), getWindowHeight());
         if(xy.x < screenMin.x)
             screenMin.x = xy.x;
         if(xy.y < screenMin.y)
@@ -203,16 +210,14 @@ void Entity::onMouseDown(MouseEvent event, Camera cam)
     shadow.texcos.x2 = screenMax.x / properties::screenWidth;
     shadow.texcos.y2 = 1.0f - (screenMax.y / properties::screenHeight);
     
-    shadow.grabbedOffset = screenMin - vec2(event.getPos());
-    
     gl::clear(ColorA(0,0,0,0));
     gl::disableDepthRead();
     gl::disableDepthWrite();
-    render(cam);
+    render(mainCam);
     shadow.fbo->unbindFramebuffer();
+    
+    shadow.grabbedOffset = ivec2();
     shadow.draw = true;
-    gl::enableDepthRead();
-    gl::enableDepthWrite();
 }
 
 void Entity::onMouseMove(MouseEvent event)

@@ -16,7 +16,9 @@ namespace gui {
     const Rectf PARTY(0, properties::screenHeight-64, properties::screenWidth, properties::screenHeight);
     const Rectf PARTY_MEMBER(0, 0, 32, 64);
     
-    const float windowBorderWidth = 12;
+    const ColorA borderColor(0, 0, 0, 1);
+    const float borderWidth = 8;
+    const float windowBorderWidth = borderWidth;
     const ColorA windowBorderColor(0.5, 0.5, 0.5, 1);
     const ColorA windowBgColor(1, 1, 1, 1);
     const Rectf windowResizeHeatRect(-windowBorderWidth-8, -windowBorderWidth-8, 0, 0); // relative to lower-right

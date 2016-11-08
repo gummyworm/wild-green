@@ -22,9 +22,9 @@ void MinimapLauncher::launch()
     game::guiMgr.addWidget(new Minimap(entity));
 }
 
-void MinimapLauncher::onMouseDown(MouseEvent event)
+bool MinimapLauncher::onMouseDown(MouseEvent event)
 {
-    PRGLauncher::onMouseDown(event);
+    return PRGLauncher::onMouseDown(event);
 }
 
 Minimap::Minimap(shared_ptr<Entity> e)
@@ -67,20 +67,21 @@ void Minimap::draw()
     gl::popMatrices();
 }
 
-void Minimap::onMouseDown(MouseEvent event)
+bool Minimap::onMouseDown(MouseEvent event)
 {
     vec3 pt, normal;
-    WidgetWindow::onMouseDown(event);
+    return WidgetWindow::onMouseDown(event);
 }
 
-void Minimap::onMouseDrag(MouseEvent event)
+bool Minimap::onMouseDrag(MouseEvent event)
 {
-    WidgetWindow::onMouseDrag(event);
-    minimapMenu.onMouseDrag(event);
+    if(WidgetWindow::onMouseDrag(event))
+       return true;
+    return minimapMenu.onMouseDrag(event);
 }
 
-void Minimap::onMouseUp(MouseEvent event)
+bool Minimap::onMouseUp(MouseEvent event)
 {
     minimapMenu.onMouseUp(event);
-    WidgetWindow::onMouseUp(event);
+    return WidgetWindow::onMouseUp(event);
 }

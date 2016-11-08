@@ -52,6 +52,8 @@
 		02DE5CAA1D9149B600F78180 /* menuitem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02DE5CA81D9149B600F78180 /* menuitem.cpp */; };
 		02F245D41DCCAB2F00CACA98 /* dave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02F245D31DCCAB2F00CACA98 /* dave.cpp */; };
 		02F245D81DCCAB7F00CACA98 /* overlay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02F245D61DCCAB7F00CACA98 /* overlay.cpp */; };
+		02F245DA1DCF873700CACA98 /* solidcolor.vert in Resources */ = {isa = PBXBuildFile; fileRef = 02F245D91DCF873700CACA98 /* solidcolor.vert */; };
+		02F245DC1DCF87FD00CACA98 /* solidcolor.frag in Resources */ = {isa = PBXBuildFile; fileRef = 02F245DB1DCF87FD00CACA98 /* solidcolor.frag */; };
 		02FE1F8B1D93EAF20049019C /* cursor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02FE1F891D93EAF20049019C /* cursor.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -142,6 +144,8 @@
 		02F245D51DCCAB5F00CACA98 /* dave.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = dave.hpp; path = ../src/dave.hpp; sourceTree = "<group>"; };
 		02F245D61DCCAB7F00CACA98 /* overlay.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = overlay.cpp; path = ../src/overlay.cpp; sourceTree = "<group>"; };
 		02F245D71DCCAB7F00CACA98 /* overlay.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = overlay.hpp; path = ../src/overlay.hpp; sourceTree = "<group>"; };
+		02F245D91DCF873700CACA98 /* solidcolor.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = solidcolor.vert; path = ../assets/solidcolor.vert; sourceTree = "<group>"; };
+		02F245DB1DCF87FD00CACA98 /* solidcolor.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = solidcolor.frag; path = ../assets/solidcolor.frag; sourceTree = "<group>"; };
 		02FE1F891D93EAF20049019C /* cursor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cursor.cpp; path = ../src/cursor.cpp; sourceTree = "<group>"; };
 		02FE1F8A1D93EAF20049019C /* cursor.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = cursor.hpp; path = ../src/cursor.hpp; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
@@ -410,6 +414,8 @@
 				02B731721D74819B0057C872 /* postpass.frag */,
 				A18DF5534BEE4AAEB8BC8274 /* CinderApp.icns */,
 				6B834FEFC7C04E18B61386D1 /* Info.plist */,
+				02F245D91DCF873700CACA98 /* solidcolor.vert */,
+				02F245DB1DCF87FD00CACA98 /* solidcolor.frag */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -475,7 +481,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				02F245DA1DCF873700CACA98 /* solidcolor.vert in Resources */,
 				02B731731D74819B0057C872 /* postpass.frag in Resources */,
+				02F245DC1DCF87FD00CACA98 /* solidcolor.frag in Resources */,
 				02B731751D7481A70057C872 /* postpass.vert in Resources */,
 				F28DB721DF8D45928D088A2C /* CinderApp.icns in Resources */,
 			);

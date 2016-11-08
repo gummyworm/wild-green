@@ -38,6 +38,7 @@ void MenuBar::addItem(string submenu, string name, function<void()> callback)
 
 void MenuBar::draw()
 {
+    Widget::draw();
     Rectf submenuRect(0, 0, getWindowWidth(), height);
     gl::color(0.8f,0.8f,0.8f);
     gl::drawSolidRect(submenuRect);
@@ -54,6 +55,7 @@ void MenuBar::draw()
             gl::drawSolidRect(submenuRect);
             gl::drawString(sm.name, textRect.getUpperLeft(), ColorA(1,1,1));
             sm.draw();
+            sm.apply();
         } else {
             gl::color(0.8f,0.8f,0.8f);
             gl::drawSolidRect(submenuRect);
@@ -63,27 +65,31 @@ void MenuBar::draw()
     }
 }
 
-void MenuBar::onMouseDrag(MouseEvent event)
+bool MenuBar::onMouseDrag(MouseEvent event)
 {
-    
+    return false;
 }
 
-void MenuBar::onMouseDown(MouseEvent event)
+bool MenuBar::onMouseDown(MouseEvent event)
 {
     ivec2 mousePos = event.getPos();
 
     for(auto &sm : menus) {
-        if(sm.rect.contains(mousePos)) {
+        if(sm.contains(mousePos)) {
             sm.open = true;
+            return true;
         } else {
             sm.open = false;
         }
     }
+    return false;
 }
 
-void MenuBar::onMouseUp(MouseEvent event)
+bool MenuBar::onMouseUp(MouseEvent event)
 {
     for(auto &sm : menus) {
-        sm.open = false;
+        if(sm.open == false)
+            return true;
     }
+    return false;
 }

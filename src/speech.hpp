@@ -23,6 +23,11 @@ public:
     void say(unique_ptr<SpeechBubble> speech);
     void update();
     void draw();
+    
+    bool onMouseDown(MouseEvent event);
+    bool onMouseUp(MouseEvent event);
+    bool onMouseDrag(MouseEvent event);
+
 };
 
 #endif /* speech_hpp */

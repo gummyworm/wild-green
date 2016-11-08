@@ -31,7 +31,6 @@ void Inspector::draw()
 {
     if(!show)
         return;
-    
     WidgetWindow::draw();
     
     gl::pushMatrices();
@@ -51,7 +50,7 @@ void Inspector::draw()
     gl::popMatrices();
 }
 
-void Inspector::onKeydown(KeyEvent event)
+bool Inspector::onKeydown(KeyEvent event)
 {
     switch(event.getCode()) {
         case KeyEvent::KEY_UP:
@@ -73,4 +72,5 @@ void Inspector::onKeydown(KeyEvent event)
         default:
             break;
     }
+    return false;
 }

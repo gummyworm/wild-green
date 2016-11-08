@@ -42,10 +42,10 @@ public:
     PRGLauncher(string name, string icon="");
     void draw() override;
     virtual void launch() {}
-    void onMouseDown(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
-    void onMouseDrag(MouseEvent event) override;
-    void onAccept(MouseEvent event, shared_ptr<class Entity> e) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
+    bool onAccept(MouseEvent event, shared_ptr<class Entity> e) override;
 };
 
 #endif /* prg_hpp */

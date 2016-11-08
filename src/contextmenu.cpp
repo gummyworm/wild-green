@@ -16,7 +16,7 @@ ContextMenu::ContextMenu()
 :Widget(),
 highlightColor(0.8f,0.8f,0.8f,1.0f)
 {
-
+    flags.drawBorder = false;
 }
 
 void ContextMenu::addItem(string name, function<void()> callback)
@@ -31,17 +31,15 @@ void ContextMenu::addItem(string name, shared_ptr<ContextMenu> submenu)
 
 void ContextMenu::draw()
 {
+    Widget::draw();
     if(!show)
         return;
     
     Rectf rect = getRect();
     float bot = rect.y2;
-    
-    gl::pushMatrices();
-    gl::setMatricesWindow(properties::screenSize);
 
-    rect.y2 = rect.y1 + fontSize;
-    vec2 p = vec2(pos);
+    rect.y2 = fontSize;
+    vec2 p = vec2();
     
     for(int i = 0; i < items.size(); ++i) {
         auto a = items[i];
@@ -75,18 +73,27 @@ int ContextMenu::itemOffset(int y)
     return -1;
 }
 
-void ContextMenu::onMouseDown(MouseEvent event)
+bool ContextMenu::onMouseDown(MouseEvent event)
 {
     setVisible(true);
+    setPos(event.getPos());
     highlightedItem = 0;
+    return true;
 }
 
-void ContextMenu::onMouseMove(MouseEvent event)
+bool ContextMenu::onMouseMove(MouseEvent event)
 {
+    if(!isVisible())
+        return false;
+    
+    return Widget::onMouseMove(event);
 }
 
-void ContextMenu::onMouseUp(MouseEvent event)
+bool ContextMenu::onMouseUp(MouseEvent event)
 {
+    if(!isVisible())
+        return false;
+    
     setVisible(false);
     vec2 mousePos = event.getPos();
     int choice = itemOffset(mousePos.y);
@@ -94,13 +101,19 @@ void ContextMenu::onMouseUp(MouseEvent event)
         auto a = items[choice].getAction();
         if(a != nullptr)
             a();
+        return true;
     }
+    return false;
 }
 
-void ContextMenu::onMouseDrag(MouseEvent event)
+bool ContextMenu::onMouseDrag(MouseEvent event)
 {
+    if(!isVisible())
+        return false;
+    
     vec2 mousePos = event.getPos();
     int choice = itemOffset(mousePos.y);
     if(choice >= 0)
         highlightedItem = choice;
+    return true;
 }

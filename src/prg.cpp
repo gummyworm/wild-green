@@ -20,26 +20,26 @@ grabbed(false)
     auto img = loadImage(loadAsset(icon));
     this->icon.tex = gl::Texture::create(img);
     setPos(vec2(100,100));
+    resize(ivec2(this->icon.tex->getWidth(), this->icon.tex->getHeight()));
+    
+    flags.drawBorder = false;
 }
 
 void PRGLauncher::draw()
 {
+    Widget::draw();
     if(grabbed)
         gl::color(properties::iconGrabbedColor);
     else
-        gl::color(1, 1, 1);
-    
-    gl::draw(icon.tex, vec2(pos.x, pos.y));
-    for(auto i : instances) {
-        i->draw();
-    }
+        gl::color(1, 1, 1, 1);
+    gl::draw(icon.tex, vec2());
 }
 
-void PRGLauncher::onMouseDown(MouseEvent event)
+bool PRGLauncher::onMouseDown(MouseEvent event)
 {
-    if(getRect().contains(event.getPos())) {
+    if(contains(event.getPos())) {
         grabbed = true;
-        grabOffset = ivec2(getRect().getUpperLeft()) - event.getPos();
+        grabOffset = ivec2(getPos2D() - event.getPos());
         if(doubleClickTimer.isStopped())
             doubleClickTimer.start();
         else if(doubleClickTimer.getSeconds() <= properties::doubleClickDelay) {
@@ -48,34 +48,27 @@ void PRGLauncher::onMouseDown(MouseEvent event)
         } else {
             doubleClickTimer.start();
         }
+        return true;
     }
-    
-    for(auto i : instances) {
-        i->onMouseDown(event);
-    }
+    return false;
 }
 
-void PRGLauncher::onMouseUp(MouseEvent event)
+bool PRGLauncher::onMouseUp(MouseEvent event)
 {
     grabbed = false;
-    for(auto i : instances) {
-        i->onMouseUp(event);
-    }
+    return false;
 }
 
-void PRGLauncher::onMouseDrag(MouseEvent event)
+bool PRGLauncher::onMouseDrag(MouseEvent event)
 {
     if(grabbed) {
         setPos(event.getPos() + grabOffset);
+        return true;
     }
-    for(auto i : instances) {
-        i->onMouseDrag(event);
-    }
+    return false;
 }
 
-void PRGLauncher::onAccept(MouseEvent event, shared_ptr<class Entity> e)
+bool PRGLauncher::onAccept(MouseEvent event, shared_ptr<class Entity> e)
 {
-    for(auto i : instances) {
-        i->onAccept(event, e);
-    }
+    return false;
 }

@@ -37,7 +37,9 @@ void Party::draw()
         m->setPos(vec2(x, y));
         m->setHandPos(vec2(handX, m->getHandPos().y));
         m->resize(vec2(gui::PARTY_MEMBER.getWidth(), gui::PARTY_MEMBER.getHeight()));
+        
         m->draw();
+        m->apply();
         
         x += gui::PARTY_MEMBER.getWidth();
         handX += handStride;

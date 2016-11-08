@@ -15,12 +15,16 @@
 #include "speechbubble.hpp"
 #include "window.hpp"
 #include "guimanager.hpp"
+#include "speech.hpp"
 
 extern PlayerCam mainCam;
 
 vec3 screenToWorld(const ivec2 &scr, float z);
 
 namespace game {
+    void add(Entity *e);
+    void remove(Entity *e);
+    
     void setup();
     void start();
     void update();
@@ -35,12 +39,14 @@ namespace game {
     
     bool pick(Entity *e, WidgetWindow *win, vec2 pos, vec3 *pickedPoint, vec3 *pickedNormal);
     shared_ptr<Entity> getPicked(ivec2 pos);
+    vec3 screenToWorld(ivec2 pos, float distance);
     
     extern gl::GlslProgRef uiProg;
     extern float deltaTime;
     
     void say(Entity *speaker, string msg);
     
+    extern SpeechManager speechMgr;
     extern GUIManager guiMgr;
 }
 

@@ -41,13 +41,18 @@ void SpeechBubble::update()
         setVisible(false);
 }
 
-void SpeechBubble::onMouseDown(MouseEvent event)
+bool SpeechBubble::onMouseDown(MouseEvent event)
 {
-    if(getRect().contains(event.getPos()))
+    if(contains(event.getPos())) {
         grab(event.getPos()-ivec2(getRect().getUpperLeft()));
+        grabbedPos = event.getPos() - getPos2D();
+        return true;
+    }
+    
+    return false;
 }
 
-void SpeechBubble::onMouseUp(MouseEvent event)
+bool SpeechBubble::onMouseUp(MouseEvent event)
 {
     bool startConversation = grabbed && event.isLeft();
     
@@ -58,32 +63,41 @@ void SpeechBubble::onMouseUp(MouseEvent event)
         if(target != nullptr) {
             target->onSpeak(speaker, text);
         }
+        return true;
     }
     
-    if(event.isRight() && getRect().contains(event.getPos()))
+    if(event.isRight() && contains(event.getPos()))
         setVisible(false);
+    
+    return false;
 }
 
-void SpeechBubble::onMouseDrag(MouseEvent event)
+bool SpeechBubble::onMouseDrag(MouseEvent event)
 {
     if(!grabbed)
-        return;
+        return false;
+    
     setPos(event.getPos()-grabbedPos);
     auto e = game::getPicked(event.getPos());
     if(e != nullptr) {
         hovered = e;
         e->setHighlighted(true);
+        return true;
     } else {
         if(hovered != nullptr)
             hovered->setHighlighted(false);
         hovered = nullptr;
+        return true;
     }
+    
+    return false;
 }
 
 SpeechBubble2::SpeechBubble2(Widget *speakerPortrait, string text, Entity *speaker, bool direction)
 :SpeechBubble(speakerPortrait, text, speaker, direction)
 {
-    
+    if(!text.empty())
+        say(text);
 }
 
 void SpeechBubble2::draw()
@@ -95,14 +109,12 @@ void SpeechBubble2::draw()
     if(speakerPortrait == nullptr)
         return;
     
-    gl::color(properties::speechboxBorderColor);
-    gl::drawStrokedRect(getRect(), properties::speechboxBorderWidth);
-    gl::drawLine(vec3(getRect().x1+8, getRect().y2, 0.0f), vec3(speakerPortrait->getPos())+vec3(3,0,0));
+    gl::drawLine(vec3(getRect().x1+8, getRect().y2, 0.0f), vec3(speakerPortrait->getPos())+vec3(3,0,0) - vec3(getPos()));
     gl::color(properties::speechboxBgColor);
     gl::enableAlphaBlending();
     gl::drawSolidRect(getRect());
     
-    font->drawString(text, vec2(getRect().x1, getRect().y1+properties::speechboxFont.getSize()/2) + vec2(properties::speechboxTextOffset));
+    font->drawString(text, vec2(0, properties::speechboxFont.getSize()/2) + vec2(properties::speechboxTextOffset));
 }
 
 void SpeechBubble2::say(string msg)
@@ -130,8 +142,7 @@ void SpeechBubble2::say(string msg)
     }
     
     setPos(ivec2(left, top));
-    resize(ivec2(right-left, bot-top));
-    rect = Rectf(left, top, right, bot);
+    resize(size);
 }
 
 SpeechBubble3::SpeechBubble3(Entity *speaker, string text, bool direction)
@@ -150,12 +161,13 @@ void SpeechBubble3::update()
 
 void SpeechBubble3::draw()
 {
+    Widget::draw();
     if(!show)
         return;
     if(mainCam.worldToEyeDepth(pos) > 0)
         return;
     
-    gl::pushModelMatrix();
+    gl::pushMatrices();
     gl::setMatricesWindow(properties::screenSize);
     
     vec2 size = font->measureString(text);
@@ -163,8 +175,6 @@ void SpeechBubble3::draw()
     Rectf rect(line.x, line.y-size.y, line.x+size.x, line.y+size.y);
     
     game::uiProg->bind();
-    gl::color(properties::speechboxBorderColor);
-    gl::drawStrokedRect(rect, properties::speechboxBorderWidth);
     gl::color(bgColor);
     gl::enableAlphaBlending();
     gl::disable(GL_TEXTURE_2D);
@@ -174,7 +184,7 @@ void SpeechBubble3::draw()
     gl::color(fontColor);
     font->drawString(text, line);
     
-    gl::popModelMatrix();
+    gl::popMatrices();
 }
 
 void SpeechBubble3::say(string msg)

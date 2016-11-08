@@ -36,6 +36,7 @@ class WorldMap {
     map<int, MapTile*> idsToTiles;
     vector<vector<vector<MapTile*>>> tiles;
 
+    gl::GlslProgRef floorShader;
     gl::BatchRef floor;
     
 public:

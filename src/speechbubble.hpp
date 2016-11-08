@@ -35,9 +35,9 @@ public:
     
     SpeechBubble(Widget *speakerPortrait, string text="", Entity *speaker=nullptr, bool direction=UP, float fadeTime=-1.0f);
     void say(string msg);
-    void onMouseDown(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
-    void onMouseDrag(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
     void update() override;
     
     string getText() {return text;}

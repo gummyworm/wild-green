@@ -30,9 +30,10 @@
 #include "TexturedCubeTile.hpp"
 #include "dave.hpp"
 #include "guimanager.hpp"
+#include "button.hpp"
+#include <glm/gtx/perpendicular.hpp>
 
 float game::deltaTime;
-
 
 // rendering
 PlayerCam mainCam;
@@ -57,6 +58,8 @@ static Cursor cursor;
 // game state
 static vector<shared_ptr<Widget>> windows;
 static vector<shared_ptr<Entity>> entities;
+static vector<shared_ptr<Entity>> toRemove;
+
 static vector<TriMesh*> pickable;
 static WorldMap world;
 static Timer gameTimer;
@@ -67,7 +70,7 @@ static vec3 grabbedNormal;
 static float grabbedDist;
 
 // managers
-SpeechManager speechMgr;
+SpeechManager game::speechMgr;
 GUIManager game::guiMgr;
 
 shared_ptr<Entity> game::getPicked(ivec2 mousePos)
@@ -143,6 +146,23 @@ bool game::pick(Entity *e, WidgetWindow *win, vec2 pos, vec3 *pickedPoint, vec3 
     }
 }
 
+vec3 game::screenToWorld(ivec2 pos, float dist)
+{
+    float u = ((float)pos.x / properties::screenWidth);
+    float v = 1.0f - ((float)pos.y / properties::screenHeight);
+    
+    vec3 o = mainCam.getPos() + mainCam.getViewDirection() * dist;
+    vec3 normal = glm::perp(vec3(mainCam.getViewDirection()), vec3(mainCam.getViewDirection())+vec3(0,1,0));
+    Ray r = mainCam.generateRay(u, v, properties::aspectRatio);
+    
+    float t;
+    // if mouse Y is over halfway up the screen, move at maximum distance
+    if(v > 0.5f && !r.calcPlaneIntersection(o, normal, &t)) {
+        //return;
+    } else if(!r.calcPlaneIntersection(o, normal, &t)) {
+    }
+    return r.calcPosition(t);
+}
 
 void test()
 {
@@ -161,12 +181,15 @@ void test()
     shared_ptr<Entity> testE(new Entity("teapot"));
     testE->setPos(vec3(0,3.0f,0));
     
-    shared_ptr<FileViewer> fileViewer(new FileViewer());
-    game::guiMgr.addWidget(fileViewer.get());
+    FileViewer *fileViewer = new FileViewer();
+    game::guiMgr.addWidget(fileViewer);
     
-    shared_ptr<CombatLauncher> combatWin(new CombatLauncher(testE));
+    CombatLauncher *combatWin = new CombatLauncher(testE);
     combatWin->setPos(ivec2(0,200));
-    game::guiMgr.addWidget(combatWin.get());
+    game::guiMgr.addWidget(combatWin);
+    
+    Button *button = new TextButton("test");
+    game::guiMgr.addWidget(button);
     
     testE->addAction("OPEN WITH FILE VIEWER", [fileViewer]() mutable {
         fileViewer->launch();
@@ -278,8 +301,11 @@ void game::draw()
     gl::drawCube(vec3(-2, 0, 0), vec3(2,2,2));
     gl::color(0.7f, 0.3f, 0.65f);
     
-    for(auto e : entities)
-        e->draw(mainCam);
+    for(auto e : entities) {
+        if(!e->isEnabled())
+            continue;
+            e->draw(mainCam);
+    }
     
     world.draw();
     fbo->unbindFramebuffer();
@@ -313,6 +339,8 @@ void game::draw()
     uiProg->bind();
     
     for(auto e : entities) {
+        if(!e->isEnabled())
+            continue;
         gl::color(1,1,1,1);
         e->label(mainCam);
     }
@@ -322,13 +350,16 @@ void game::draw()
     //desk.draw();
     party.draw();
     menuBar.draw();
+    menuBar.apply();
     
-    if(menu != nullptr)
+    if(menu != nullptr) {
         menu->draw();
-    
+        menu->apply();
+    }
+    speechMgr.draw();
     guiMgr.draw();
     cursor.draw();
-    
+
     gl::enableDepthRead();
     gl::enableDepthWrite();
 }
@@ -338,8 +369,20 @@ void game::resize(ivec2 size)
     mainCam.onResize();
     fbo = gl::Fbo::create(size.x, size.y);
     for(auto e : entities) {
+        if(!e->isEnabled())
+            continue;
         e->onResize();
     }
+}
+
+void game::add(Entity *e)
+{
+    entities.push_back(shared_ptr<Entity>(e));
+}
+
+void game::remove(Entity *e)
+{
+    toRemove.push_back(shared_ptr<Entity>(e));
 }
 
 void game::update()
@@ -347,10 +390,26 @@ void game::update()
     deltaTime = gameTimer.getSeconds() - gameTimePrev;
     gameTimePrev += deltaTime;
     
-    for(auto e : entities)
+    if(!toRemove.empty()) {
+        vector<shared_ptr<Entity>> updated;
+        for(auto e : toRemove) {
+            if(find(toRemove.begin(), toRemove.begin(), e) == toRemove.end()) {
+                updated.push_back(e);
+            }
+        }
+        entities = updated;
+        toRemove.clear();
+    }
+    
+    for(auto e : entities) {
+        if(!e->isEnabled())
+            continue;
+        
         e->update();
+    }
     
     guiMgr.update();
+    speechMgr.update();
 }
 
 void game::onMouseDown(MouseEvent event)
@@ -373,6 +432,7 @@ void game::onMouseDown(MouseEvent event)
     }
     
     guiMgr.onMouseDown(event);
+    speechMgr.onMouseDown(event);
     
     if(menuBar.getRect().contains(mousePos)) {
         menuBar.onMouseDown(event);
@@ -397,12 +457,12 @@ void game::onMouseUp(MouseEvent event)
         guiMgr.onMouseUp(event);
     }
     
-    //sort(windows.begin(), windows.end());
-    
     for(auto e : entities)
         e->onMouseUp(event);
     
     party.onMouseUp(event);
+    
+    speechMgr.onMouseUp(event);
     
     grabbed = nullptr;
 }
@@ -434,12 +494,14 @@ void game::onMouseDrag(MouseEvent event)
         gl::color(Colorf(0.5, 0.5, 0));
         
         float t;
+        vec3 normal = glm::perp(vec3(mainCam.getViewDirection()), vec3(mainCam.getViewDirection())+vec3(0,1,0));
+        
         //if(!r.calcPlaneIntersection(grabbedPt, grabbedNormal, &t)) {
         
         // if mouse Y is over halfway up the screen, move at maximum distance
-        if(v > 0.5f && !r.calcPlaneIntersection(grabbedPt, vec3(0, 1, 0), &t)) {
+        if(v > 0.5f && !r.calcPlaneIntersection(grabbedPt, normal, &t)) {
             //return;
-        } else if(!r.calcPlaneIntersection(grabbedPt, vec3(0, 1, 0), &t)) {
+        } else if(!r.calcPlaneIntersection(grabbedPt, normal, &t)) {
             return;
         }
         
@@ -453,9 +515,9 @@ void game::onMouseDrag(MouseEvent event)
 
     for(auto e : entities)
         e->onMouseDragged(event);
-    for(auto w : windows)
-        guiMgr.onMouseDrag(event);
     
+    guiMgr.onMouseDrag(event);
+    speechMgr.onMouseDrag(event);
     party.onMouseDrag(event);
 }
 

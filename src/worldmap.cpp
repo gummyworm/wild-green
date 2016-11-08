@@ -13,15 +13,15 @@
 #include "tiles.hpp"
 
 WorldMap::WorldMap()
+:floor(nullptr)
 {
 }
 
 WorldMap::WorldMap(map<int, MapTile> idsToTiles, vector<vector<vector<int>>> tiles)
+:WorldMap()
 {
     idsToTiles = idsToTiles;
     tiles = tiles;
-    
-    floor = gl::Batch::create(geom::Plane(), gl::getStockShader(gl::ShaderDef().lambert().color()));
 }
 
 void WorldMap::draw()
@@ -29,11 +29,20 @@ void WorldMap::draw()
     gl::pushModelMatrix();
     
     // draw the floor
-    //floor->draw();
+    if(floor != nullptr) {
+        gl::pushMatrices();
+        gl::translate(0,-0.5,0);
+        gl::scale(100,100,100);
+        floor->draw();
+        gl::popMatrices();
+    } else {
+        auto shader = gl::GlslProg::create(loadAsset("solidcolor.vert"), loadAsset("solidcolor.frag"));
+        floor = gl::Batch::create(geom::Plane(), shader); //gl::getStockShader(gl::ShaderDef().lambert().color()));
+    }
     //game::uiProg->bind();
-    gl::color(0,1,0,1);
-    gl::drawCube(vec3(0,-300,0), vec3(600));
-    gl::color(1, 0, 0);
+    //gl::color(0,1,0,1);
+    //gl::drawCube(vec3(0,-300,0), vec3(600));
+    //gl::color(1, 0, 0);
     
     int x, y, z;
     

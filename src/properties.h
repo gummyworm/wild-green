@@ -36,7 +36,7 @@ namespace properties {
 
     // player properties
     const Rectf portraitRect = Rectf(0,0,32,64);
-    const ivec2 speechboxSize = ivec2(300, 120);
+    const ivec2 speechboxSize = ivec2(200, 120);
     const ivec2 speechboxOffset = ivec2(10, 55);
     const ivec2 speechboxTextOffset = ivec2(5,16);
     const ColorA speechboxBgColor = ColorA(1,1,1,0.75f);

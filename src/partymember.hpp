@@ -50,9 +50,9 @@ public:
     PartyMember(shared_ptr<Entity> e, string name, const fs::path portrait, const fs::path handImg="");
     
     void draw() override;
-    void onMouseDown(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
-    void onMouseDrag(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
 
     void joinConversation(shared_ptr<Conversation> convo);
     void say(string msg);

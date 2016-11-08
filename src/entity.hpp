@@ -27,6 +27,7 @@ enum EntityDrawState {
 };
 
 struct EntityFlags {
+    bool enabled;
     bool grabbable;
     bool movable;
     bool hasGravity;
@@ -34,6 +35,16 @@ struct EntityFlags {
     bool highlight;
     bool solid;
 };
+
+struct EntityShadow {
+    bool draw;
+    ivec2 pos;
+    ivec2 grabbedOffset;
+    ivec2 dim;
+    Rectf texcos;
+    gl::FboRef fbo;
+};
+
 
 class Entity {
 protected:
@@ -55,16 +66,8 @@ protected:
         gl::GlslProgRef shadow;
     }shaders;
     
-    struct shadow {
-        bool draw;
-        ivec2 pos;
-        ivec2 grabbedOffset;
-        ivec2 dim;
-        Rectf texcos;
-        gl::FboRef fbo;
-    }shadow;
-    
     EntityFlags flags;
+    EntityShadow shadow;
     
     int hp;
     int maxHp;
@@ -115,7 +118,7 @@ public:
     vec3 getRotation() {return rotation;}
     
     AxisAlignedBox getAABB() {return aabb;}
-    
+    EntityShadow * getShadow() {return &shadow;}
     void setHighlighted(bool highlight) {flags.highlight = highlight;}
     
     virtual void onMouseDown(MouseEvent event, Camera cam);
@@ -135,6 +138,10 @@ public:
     
     bool isGrabbed() {return shadow.draw;}
     void setShadow(bool on) {shadow.draw = on;}
+    bool isEnabled() {return flags.enabled;}
+    void setEnabled(bool enable) {flags.enabled = enable;}
+    void generateShadow();
+    void setShadowPos(ivec2 pos) {shadow.pos = pos;}
 };
 
 #endif /* entity_hpp */

@@ -28,14 +28,14 @@ protected:
     int selectedMenu;
     int height;
 public:
-    MenuBar():Widget(),selectedMenu(-1), height(16) {}
+    MenuBar():Widget(),selectedMenu(-1), height(16){pos = vec3(0,0,0);}
     
     void addSubmenu(Menu m);
     void addItem(string submenu, string name, function<void()> callback);
     void draw() override;
-    void onMouseDrag(MouseEvent event) override;
-    void onMouseDown(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
 };
 
 #endif /* menubar_hpp */

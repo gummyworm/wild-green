@@ -22,8 +22,8 @@ protected:
     bool pressed;
 public:
     Button();
-    void onMouseDown(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
     virtual void onClicK() {}
     void draw() override;
     

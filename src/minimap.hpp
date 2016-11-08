@@ -20,7 +20,7 @@ protected:
 public:
     MinimapLauncher(shared_ptr<Entity> e);
     void launch() override;
-    void onMouseDown(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
 };
 
 class Minimap : public PRG {
@@ -37,9 +37,9 @@ public:
     Minimap(shared_ptr<Entity> e=nullptr);
     
     void draw() override;
-    void onMouseDown(MouseEvent event) override;
-    void onMouseDrag(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
 };
 
 #endif /* minimap_hpp */

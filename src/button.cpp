@@ -12,12 +12,13 @@ Button::Button()
 :Widget(),
 pressed(false),
 pressedColor(0.6f, 0.6f, 0.6f, 1),
-releasedColor(0.6f, 0.6f, 0.6f, 1)
+releasedColor(0.8f, 0.8f, 0.8f, 1)
 {
 }
 
 void Button::draw()
 {
+    Widget::draw();
     if(pressed)
         gl::color(pressedColor);
     else
@@ -25,14 +26,20 @@ void Button::draw()
     gl::drawSolidRect(getRect());
 }
 
-void Button::onMouseDown(MouseEvent event)
+bool Button::onMouseDown(MouseEvent event)
 {
-    pressed = true;
+    if(contains(event.getPos())) {
+        pressed = true;
+        return true;
+    }
+    return false;
 }
 
-void Button::onMouseUp(MouseEvent event)
+bool Button::onMouseUp(MouseEvent event)
 {
+    bool handled = !pressed && contains(event.getPos());
     pressed = false;
+    return handled;
 }
 
 TextButton::TextButton(string text)

@@ -16,10 +16,12 @@ class GUIManager {
 protected:
     vector<Widget*> widgets;
     vector<Widget*> newWidgets;
+    vector<Widget*> toRemove;
 public:
     GUIManager();
     
     void addWidget(Widget *w);
+    void remove(Widget *w);
     
     void bringFront(Widget *widget);
     void moveBack(Widget *widget);

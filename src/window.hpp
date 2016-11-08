@@ -79,10 +79,10 @@ public:
     WidgetWindow(string name, int width = 320, int height = 200);
     
     void draw() override;
-    void onMouseDown(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
-    void onMouseMove(MouseEvent event) override;
-    void onMouseDrag(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
+    bool onMouseMove(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
     void setTitle(string title);
     
     Rectf getInternalRect();

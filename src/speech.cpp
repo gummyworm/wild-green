@@ -22,6 +22,7 @@ void SpeechManager::update()
 {
     for(auto&& s : newSpeeches)
         speeches.push_back(move(s));
+    newSpeeches.clear();
     
     for(auto&& s : speeches) {
         s->update();
@@ -32,5 +33,30 @@ void SpeechManager::draw()
 {
     for(auto&& s : speeches) {
         s->draw();
+        s->apply();
     }
+}
+
+bool SpeechManager::onMouseDown(MouseEvent event)
+{
+    for(auto&& s : speeches) {
+        s->onMouseDown(event);
+    }
+    return false;
+}
+
+bool SpeechManager::onMouseUp(MouseEvent event)
+{
+    for(auto&& s : speeches) {
+        s->onMouseUp(event);
+    }
+    return false;
+}
+
+bool SpeechManager::onMouseDrag(MouseEvent event)
+{
+    for(auto&& s : speeches) {
+        s->onMouseDrag(event);
+    }
+    return false;
 }

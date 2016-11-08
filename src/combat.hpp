@@ -20,8 +20,8 @@ protected:
 public:
     CombatLauncher(shared_ptr<Entity> e);
     void launch() override;
-    void onMouseDown(MouseEvent event) override;
-    void onAccept(MouseEvent event, shared_ptr<Entity> e) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onAccept(MouseEvent event, shared_ptr<Entity> e) override;
 };
 
 class Combat : public PRG {
@@ -38,9 +38,9 @@ public:
     Combat(shared_ptr<Entity> e=nullptr);
     
     void draw() override;
-    void onMouseDown(MouseEvent event) override;
-    void onMouseDrag(MouseEvent event) override;
-    void onMouseUp(MouseEvent event) override;
+    bool onMouseDown(MouseEvent event) override;
+    bool onMouseDrag(MouseEvent event) override;
+    bool onMouseUp(MouseEvent event) override;
 };
 
 #endif /* combat_hpp */
