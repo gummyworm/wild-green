@@ -19,7 +19,7 @@ entity(e)
 
 void MinimapLauncher::launch()
 {
-    game::guiMgr.addWidget(new Minimap(entity));
+    game::guiMgr.addWidget(shared_ptr<Widget>(new Minimap(entity)));
 }
 
 bool MinimapLauncher::onMouseDown(MouseEvent event)

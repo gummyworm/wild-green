@@ -11,8 +11,11 @@
 
 #include <stdio.h>
 #include "widget.hpp"
+#include <cinder/gl/TextureFont.h>
+#include "properties.h"
 
 using namespace std;
+using namespace ci;
 
 class MenuItem {
     string name;
@@ -29,6 +32,8 @@ public:
 };
 
 class Menu : public Widget {
+protected:
+    gl::TextureFontRef font;
 public:
     bool open;
     string name;
@@ -36,8 +41,9 @@ public:
     vector<MenuItem> items;
     int selectedItem;
     
-    Menu(string name):name(name), open(false) {}
+    Menu(string name):name(name), open(false) { font = gl::TextureFont::create(Font(properties::menuFont)); }
     void addItem(string name, function<void()> callback) {items.push_back(MenuItem(name, callback));}
+    void draw() override;
 };
 
 #endif /* menuitem_hpp */

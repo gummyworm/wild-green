@@ -31,7 +31,15 @@
 #include "dave.hpp"
 #include "guimanager.hpp"
 #include "button.hpp"
+#include "ButtonGrid.hpp"
+#include "editorpalette.hpp"
+#include "trigger.hpp"
 #include <glm/gtx/perpendicular.hpp>
+#include "textedit.hpp"
+#include "console.hpp"
+#include "blender.hpp"
+#include "fx.hpp"
+#include "herd_organizer.hpp"
 
 float game::deltaTime;
 
@@ -59,6 +67,7 @@ static Cursor cursor;
 static vector<shared_ptr<Widget>> windows;
 static vector<shared_ptr<Entity>> entities;
 static vector<shared_ptr<Entity>> toRemove;
+static vector<shared_ptr<Trigger>> triggers;
 
 static vector<TriMesh*> pickable;
 static WorldMap world;
@@ -68,6 +77,8 @@ static float gameTimePrev;
 static vec3 grabbedPt;
 static vec3 grabbedNormal;
 static float grabbedDist;
+
+static ColorA clearColor = ColorA(0,0,1,1);
 
 // managers
 SpeechManager game::speechMgr;
@@ -164,10 +175,25 @@ vec3 game::screenToWorld(ivec2 pos, float dist)
     return r.calcPosition(t);
 }
 
+vector<shared_ptr<Entity>> game::entitiesInRadius(vec3 origin, float radius)
+{
+    vector<shared_ptr<Entity>> matched;
+    for(auto e : entities) {
+        if(distance(e->getPos(), origin) <= radius) {
+            matched.push_back(e);
+        }
+    }
+    return matched;
+}
+
 void test()
 {
     shared_ptr<Entity> carlosE(new Entity("carlos"));
     shared_ptr<Entity> petE(new Entity("pet"));
+    
+    carlosE->setPos(vec3(0,0,-10));
+    mainCam.setViewer(carlosE);
+    carlosE->setVisible(false);
     
     shared_ptr<PartyMember> camel(new PartyMember(carlosE, "carlos", "carlos.png", "carlos_hand.png"));
     shared_ptr<PartyMember> camel2(new PartyMember(petE, "pet", "pet2001.png", "cursor.png"));
@@ -178,18 +204,30 @@ void test()
     camel->joinConversation(convo);
     camel->say("HELLO!");
     
-    shared_ptr<Entity> testE(new Entity("teapot"));
+    shared_ptr<Entity> testE(new Entity("teapot", "", nullptr, "carlos.png"));
     testE->setPos(vec3(0,3.0f,0));
     
-    FileViewer *fileViewer = new FileViewer();
+    shared_ptr<PartyMember> camel3(new PartyMember(testE, "carlos", "carlos.png", "carlos_hand.png"));
+    party.addMember(camel3);
+    
+    shared_ptr<Blender> fileViewer(new Blender());
     game::guiMgr.addWidget(fileViewer);
     
-    CombatLauncher *combatWin = new CombatLauncher(testE);
+    shared_ptr<HerdOrganizer> herdOrg(new HerdOrganizer(carlosE, 8,8));
+    game::guiMgr.addWidget(herdOrg);
+    
+    shared_ptr<Console> textEdit(new Console());
+    textEdit->setPos(ivec2(300, 200));
+    game::guiMgr.addWidget(textEdit);
+    
+    shared_ptr<EditorPalette> editor(new EditorPalette());
+    editor->setPos(ivec3(280, 300, 0));
+    game::guiMgr.addWidget(editor);
+    
+    shared_ptr<CombatLauncher> combatWin(new CombatLauncher(testE));
     combatWin->setPos(ivec2(0,200));
     game::guiMgr.addWidget(combatWin);
     
-    Button *button = new TextButton("test");
-    game::guiMgr.addWidget(button);
     
     testE->addAction("OPEN WITH FILE VIEWER", [fileViewer]() mutable {
         fileViewer->launch();
@@ -201,12 +239,18 @@ void test()
     testE->addAction("test action3", [](){});
     testE->addAction("test action4", [](){});
     
+    entities.push_back(carlosE);
     entities.push_back(testE);
     
     // setup the menu
-    menuBar.addSubmenu(Menu("FILE"));
-    menuBar.addSubmenu(Menu("EDIT"));
-    
+    shared_ptr<ContextMenu> fileMenu(new ContextMenu("FILE"));
+    fileMenu->addItem("test", [](){});
+    fileMenu->addItem("test", [](){});
+    fileMenu->addItem("test", [](){});
+    menuBar.addSubmenu(fileMenu);
+    shared_ptr<ContextMenu> editMenu(new ContextMenu("EDIT"));
+    menuBar.addSubmenu(editMenu);
+
     shared_ptr<Inspector> win(new Inspector(gl::Batch::create(geom::Cube(), gl::getStockShader(gl::ShaderDef().lambert().color()))));
     windows.push_back(win);
     
@@ -247,6 +291,8 @@ void test()
     };
     
     world.load(worldTiles);
+    
+    triggers.push_back(shared_ptr<TextTrigger>(new TextTrigger(vec3(-3,0,-3), 2, "TRIGGERED!!!")));
     
     desk.setImage("desk.png");
 
@@ -292,7 +338,7 @@ void game::draw()
     gl::enableAlphaBlending();
     
     fbo->bindFramebuffer();
-    gl::clear(Color(0,1,1));
+    gl::clear(clearColor);
     
     // draw the scene
     gl::setMatrices(mainCam);
@@ -305,6 +351,9 @@ void game::draw()
         if(!e->isEnabled())
             continue;
             e->draw(mainCam);
+    }
+    for(auto t : triggers) {
+        t->draw();
     }
     
     world.draw();
@@ -331,7 +380,7 @@ void game::draw()
     tex->setMinFilter(GL_NEAREST);
     tex->setMagFilter(GL_NEAREST);
     tex->bind(0);
-    gl::draw(tex, tex->getBounds()); //Rectf(tex->getBounds()).getCenteredFit(getWindowBounds(), true));
+    gl::draw(tex, tex->getBounds());
     
     // draw the UI
     gl::disableDepthRead();
@@ -375,8 +424,9 @@ void game::resize(ivec2 size)
     }
 }
 
-void game::add(Entity *e)
+void game::add(Entity *e, vec3 pos)
 {
+    e->setPos(pos);
     entities.push_back(shared_ptr<Entity>(e));
 }
 
@@ -397,6 +447,7 @@ void game::update()
                 updated.push_back(e);
             }
         }
+
         entities = updated;
         toRemove.clear();
     }
@@ -404,10 +455,12 @@ void game::update()
     for(auto e : entities) {
         if(!e->isEnabled())
             continue;
-        
         e->update();
+        for(auto t : triggers) {
+            t->test(e.get());
+        }
     }
-    
+    fx::update();
     guiMgr.update();
     speechMgr.update();
 }
@@ -418,19 +471,18 @@ void game::onMouseDown(MouseEvent event)
     menu = nullptr;
     for(auto e : entities) {
         if(pick(e.get(), nullptr, mousePos, &grabbedPt, &grabbedNormal)) {
-            if(event.isLeft()) {
-                menu = e->getActions();
+            if(event.isRight()) {
+                menu = e->getActions().get();
                 menu->setPos(event.getPos());
                 menu->setVisible(false);
                 menu->onMouseDown(event);
-            } else if(event.isRight()) {
+            } else if(event.isLeft()) {
                 if(e->getFlags().grabbable)
                     grabbed = e;
                 e->onMouseDown(event, mainCam);
             }
         }
     }
-    
     guiMgr.onMouseDown(event);
     speechMgr.onMouseDown(event);
     
@@ -449,10 +501,11 @@ void game::onMouseUp(MouseEvent event)
     
     // if anything was grabbed, send onAccept events to programs
     if(grabbed != nullptr) {
-        guiMgr.onAccept(event, grabbed);
-        shared_ptr<Entity> e = getPicked(event.getPos());
-        if(e != nullptr)
-            e->onAccept(grabbed);
+        if(!guiMgr.onAccept(event, grabbed)) {
+            shared_ptr<Entity> e = getPicked(event.getPos());
+            if(e != nullptr)
+                e->onAccept(grabbed);
+        }
     } else {
         guiMgr.onMouseUp(event);
     }
@@ -485,6 +538,7 @@ void game::onMouseDrag(MouseEvent event)
     
     if(menu != nullptr)
         menu->onMouseDrag(event);
+    menuBar.onMouseDrag(event);
     
     if(grabbed != nullptr) {
         float u = ((float)event.getX()) / properties::screenWidth;
@@ -508,7 +562,7 @@ void game::onMouseDrag(MouseEvent event)
         vec3 p = r.calcPosition(t);
         //p.z = grabbedPt.z; //grabbedPt.z - mainCam.getPos().z;
         
-        grabbed->setPos(p);
+        //grabbed->setPos(p);
         //grabbedDist = grabbedPt.z - mainCam.getPos().z; //glm::distance(grabbedPt, mainCam.getPos());
         //grabbed->setPos(r.getOrigin() + (r.getDirection() * grabbedDist));
     }
@@ -521,13 +575,28 @@ void game::onMouseDrag(MouseEvent event)
     party.onMouseDrag(event);
 }
 
+shared_ptr<Entity> game::colliding(Entity *entity)
+{
+    
+    for(auto e : entities) {
+        if(!e->isVisible())
+            continue;
+        if(e->getAABB().intersects(entity->getAABB())) {
+            return e;
+        }
+    }
+    return nullptr;
+}
+
 void game::onKeydown(KeyEvent event)
 {
     vec3 old = mainCam.getPos();
-    mainCam.onKeyDown(event);
     
-    //if(world.intersects(mainCam.getAABB())) {
-    if(world.containsPoint(mainCam.getPos())) {
+    if(guiMgr.onKeydown(event))
+        return;
+    
+    mainCam.onKeyDown(event);
+    if(world.containsPoint(mainCam.getPos() + vec3(0,1,0))) {
         mainCam.setPos(old);
     }
     
@@ -546,14 +615,23 @@ void game::onKeydown(KeyEvent event)
         default:
             break;
     }
-    for(auto w : windows)
-        w->onKeydown(event);
 }
 
 void game::say(Entity *speaker, string msg)
 {
     speechMgr.say(speaker, msg);
 }
+
+void game::grab(Entity *e)
+{
+    grabbed = shared_ptr<Entity>(e);
+}
+
+void game::setClearColor(ColorA color)
+{
+    clearColor = color;
+}
+
 
 /*
 vec3 screenToWorld(const ivec2 &scr, float z)

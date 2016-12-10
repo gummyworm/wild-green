@@ -6,11 +6,15 @@
 //
 //
 
+#include <iterator>
 #include "speech.hpp"
 
 void SpeechManager::say(Entity *speaker, string msg)
 {
-    newSpeeches.push_back(unique_ptr<SpeechBubble>(new SpeechBubble3(speaker, msg)));
+    if(speaker != nullptr)
+        newSpeeches.push_back(unique_ptr<SpeechBubble>(new SpeechBubble3(speaker, msg)));
+    else
+        newSpeeches.push_back(unique_ptr<SpeechBubble>(new SpeechBubble2(nullptr, msg)));
 }
 
 void SpeechManager::say(unique_ptr<SpeechBubble> speech)
@@ -18,10 +22,25 @@ void SpeechManager::say(unique_ptr<SpeechBubble> speech)
     newSpeeches.push_back(move(speech));
 }
 
+void SpeechManager::silence(Entity *speaker)
+{
+    return;
+//    vector<unique_ptr<SpeechBubble>> updated;
+//    updated.reserve(speeches.size());
+//    
+//    for(auto&& s : speeches) {
+//        if(s->getSpeaker() != speaker) {
+//            updated.push_back(move(s));
+//            newSpeeches.push_back(move(s));
+//        }
+//    }
+//    speeches.clear();
+//    update();
+}
+
 void SpeechManager::update()
 {
-    for(auto&& s : newSpeeches)
-        speeches.push_back(move(s));
+    move(newSpeeches.begin(), newSpeeches.end(), back_inserter(speeches));
     newSpeeches.clear();
     
     for(auto&& s : speeches) {

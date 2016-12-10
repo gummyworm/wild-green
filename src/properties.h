@@ -26,7 +26,6 @@ namespace properties {
     
     const ivec2 cursorSize = ivec2(32, 32);
     
-    
     // colors
     const ColorA highlightColor = ColorA(0, 0, 1, 1);
     const ColorA labelColor = ColorA(0.5f, 0.5f, 0.5f, 1);
@@ -46,13 +45,21 @@ namespace properties {
     const Rectf playerHandRect = Rectf(screenWidth/2, screenHeight-64, screenWidth/2+64, screenHeight-64+64);
     const float handBobAmplitude = 10.0f;
     
+    // GUI properties
+    const int windowTitleHeight = 20;
+    const int windowPriority = 100;
+    const int prgPriority = 0;
+    
     // Fonts
     const Font speechboxFont = Font("Arial", 16);
+    const Font menuFont = Font("Arial", 22);
+    const Font iconFont = Font("Arial", 16);
     const Font font = Font("Arial", 22);
     const Font clockFont = Font("Arial", 20);
     const Font entityLabelFont = Font("Arial", 26);
+    const Font windowTitleFont = Font("Arial", 14);
     
-    const float doubleClickDelay = 1.5f;
+    const float doubleClickDelay = 0.25f;
     
     // Keybindings
     const key_t KEY_NEXT_PARTY_MEMBER = KeyEvent::KEY_TAB;

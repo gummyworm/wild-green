@@ -9,7 +9,7 @@
 #include <algorithm>
 #include "guimanager.hpp"
 
-bool sortZ(Widget *w1, Widget *w2)
+static bool sortZ(shared_ptr<Widget> w1, shared_ptr<Widget> w2)
 {
     return w1->getPos().z > w2->getPos().z;
 }
@@ -20,7 +20,7 @@ GUIManager::GUIManager()
     
 }
 
-void GUIManager::addWidget(Widget *w)
+void GUIManager::addWidget(shared_ptr<Widget> w)
 {
     newWidgets.push_back(w);
 }
@@ -28,6 +28,16 @@ void GUIManager::addWidget(Widget *w)
 void GUIManager::remove(Widget *w)
 {
     toRemove.push_back(w);
+}
+
+shared_ptr<Widget> GUIManager::getWidget(Widget *widget)
+{
+    for(auto w : widgets) {
+        if(w.get() == widget) {
+            return w;
+        }
+    }
+    return nullptr;
 }
 
 void GUIManager::bringFront(Widget *widget)
@@ -43,31 +53,28 @@ void GUIManager::moveBack(Widget *widget)
 void GUIManager::update()
 {
     if(!toRemove.empty()) {
-        vector<Widget*> updated;
+        vector<shared_ptr<Widget>> updated;
         for(auto w : widgets) {
-            if(find(toRemove.begin(), toRemove.end(), w) == toRemove.end()) {
+            if(find(toRemove.begin(), toRemove.end(), w.get()) == toRemove.end()) {
                 updated.push_back(w);
             } else {
                 // TODO: delete
             }
         }
-        toRemove.clear();
         widgets = updated;
     }
     
-    for(auto nw : newWidgets)
+    for(auto nw : newWidgets) {
         widgets.push_back(nw);
-    newWidgets.clear();
+    }
     
+    newWidgets.clear();
+    toRemove.clear();
+
     sort(widgets.begin(), widgets.end(), sortZ);
     
-    int i = 0;
     for(auto w : widgets) {
         w->update();
-        
-        ivec3 pos = w->getPos();
-        pos.z = i;
-        w->setPos(pos);
     }
 }
 
@@ -77,6 +84,7 @@ void GUIManager::draw()
     for(auto w : widgets) {
         w->draw();
         w->apply();
+        gl::disable(GL_SCISSOR_TEST);
     }
     reverse(widgets.begin(), widgets.end());
 }
@@ -110,17 +118,35 @@ void GUIManager::onMouseDrag(MouseEvent event)
     }
 }
 
-void GUIManager::onKeydown(KeyEvent event)
+bool GUIManager::onKeydown(KeyEvent event)
 {
     for(auto w : widgets) {
-        w->onKeydown(event);
+        if(w->onKeydown(event))
+            return true;
     }
+    return false;
 }
 
-void GUIManager::onAccept(MouseEvent event, shared_ptr<class Entity> e)
+bool GUIManager::onAccept(MouseEvent event, shared_ptr<class Entity> e)
 {
     for(auto w : widgets) {
-        if(w->contains(event.getPos()))
-           w->onAccept(event, e);
+        if(w->contains(event.getPos())) {
+            if(w->onAccept(event, e)) {
+                return true;
+            }
+        }
     }
+    return false;
+}
+
+bool GUIManager::onAccept(MouseEvent event, shared_ptr<Widget> widget)
+{
+    for(auto w : widgets) {
+        if(w->contains(event.getPos())) {
+            if(w->onAccept(event, widget)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

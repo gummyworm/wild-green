@@ -19,10 +19,15 @@ grabbed(false)
     }
     auto img = loadImage(loadAsset(icon));
     this->icon.tex = gl::Texture::create(img);
-    setPos(vec2(100,100));
+    setPos(vec3(100,100,-100));
     resize(ivec2(this->icon.tex->getWidth(), this->icon.tex->getHeight()));
     
     flags.drawBorder = false;
+    flags.drawBg = false;
+    flags.scissor = false;
+    
+    font = gl::TextureFont::create(properties::iconFont);
+    fontColor = ColorA(1,0.5,1,1);
 }
 
 void PRGLauncher::draw()
@@ -33,6 +38,12 @@ void PRGLauncher::draw()
     else
         gl::color(1, 1, 1, 1);
     gl::draw(icon.tex, vec2());
+    
+    // draw the name
+    gl::color(0, 0, 0, 1);
+    gl::drawSolidRect(Rectf(vec2(-2, icon.tex->getHeight()), vec2(0, icon.tex->getHeight()) + font->measureString(name) + vec2(2,4)));
+    gl::color(fontColor);
+    font->drawString(name, vec2(0, icon.tex->getHeight() + font->measureString(name).y));
 }
 
 bool PRGLauncher::onMouseDown(MouseEvent event)

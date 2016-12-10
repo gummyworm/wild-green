@@ -9,6 +9,7 @@
 #include "partymember.hpp"
 #include "properties.h"
 #include "game.h"
+#include "entity_widget.hpp"
 
 using namespace ci;
 using namespace ci::app;
@@ -16,22 +17,29 @@ using namespace ci::app;
 PartyMember::PartyMember(shared_ptr<Entity> e, string name, const fs::path portrait, const fs::path handImage)
 :Widget(nullptr, 32, 64),
 name(name),
-hand(handImage, properties::playerHandRect)
+hand(handImage, properties::playerHandRect),
+drawShadow(false),
+entity(e)
 {
     this->portrait = gl::Texture::create(loadImage(loadAsset(portrait)));
     this->portrait->setMinFilter(GL_NEAREST);
     this->portrait->setMagFilter(GL_NEAREST);
-    this->entity = entity;
 }
 
 void PartyMember::draw()
 {
     Widget::draw();
+    
     // draw the portrait
     gl::color(1, 1, 1);
     gl::draw(portrait, vec2());
     gl::color(1, 0, 0);
     gl::drawString(name, vec2(0,  -fontSize), fontColor, properties::font);
+    
+    // and its shadow
+    if(drawShadow) {
+        gl::draw(portrait, shadowPos);
+    }
     
     // draw speech bubble
     for(auto& s : speechBubbles) {
@@ -46,8 +54,15 @@ void PartyMember::draw()
 bool PartyMember::onMouseDown(MouseEvent event)
 {
     if(contains(event.getPos())) {
+        //drawShadow = true;
+        
+        auto ew = shared_ptr<EntityWidget>(new EntityWidget(entity, portrait));
+        game::guiMgr.addWidget(ew);
+        ew->grab(event.getPos() - getAbsPos2D());
+        ew->setAbsPos2D(getAbsPos2D());
+        shadowPos = event.getPos() - getAbsPos2D();
         if(event.isRight())
-            speechBubbles = vector<unique_ptr<SpeechBubble>>();
+            game::speechMgr.silence(entity.get()); //speechBubbles = vector<unique_ptr<SpeechBubble>>();
         else
             say("Hello!");
         return true;
@@ -79,6 +94,7 @@ bool PartyMember::onMouseDown(MouseEvent event)
 
 bool PartyMember::onMouseUp(MouseEvent event)
 {
+    drawShadow = false;
     for(auto& s : speechBubbles) {
         if(s->onMouseUp(event))
             return true;
@@ -92,6 +108,7 @@ bool PartyMember::onMouseDrag(MouseEvent event)
         if(s->onMouseDrag(event))
             return true;
     }
+    shadowPos = event.getPos() - getAbsPos2D();
     return false;
 }
 

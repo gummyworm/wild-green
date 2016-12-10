@@ -22,7 +22,7 @@ extern PlayerCam mainCam;
 vec3 screenToWorld(const ivec2 &scr, float z);
 
 namespace game {
-    void add(Entity *e);
+    void add(Entity *e, vec3 pos=vec3());
     void remove(Entity *e);
     
     void setup();
@@ -36,8 +36,11 @@ namespace game {
     void onMouseMove(MouseEvent event);
     void onMouseDrag(MouseEvent event);
     void onKeydown(KeyEvent event);
-    
+    shared_ptr<Entity> colliding(Entity *e);
+
     bool pick(Entity *e, WidgetWindow *win, vec2 pos, vec3 *pickedPoint, vec3 *pickedNormal);
+    vector<shared_ptr<Entity>> entitiesInRadius(vec3 origin, float radius);
+
     shared_ptr<Entity> getPicked(ivec2 pos);
     vec3 screenToWorld(ivec2 pos, float distance);
     
@@ -45,6 +48,9 @@ namespace game {
     extern float deltaTime;
     
     void say(Entity *speaker, string msg);
+    void grab(Entity *e);
+
+    void setClearColor(ColorA color);
     
     extern SpeechManager speechMgr;
     extern GUIManager guiMgr;

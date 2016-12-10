@@ -92,11 +92,11 @@ void digitalApp::keyDown(KeyEvent event)
 
 void digitalApp::update()
 {
-     game::update();
 }
 
 void digitalApp::draw()
 {
+     game::update();
      game::draw();
 }
 

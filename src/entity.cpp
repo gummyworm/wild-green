@@ -26,7 +26,7 @@ void Entity::setupShaders()
     shaders.shadow = gl::getStockShader(gl::ShaderDef().lambert().texture());
 }
 
-Entity::Entity(string name, const fs::path &model, gl::GlslProgRef prog)
+Entity::Entity(string name, const fs::path &model, gl::GlslProgRef prog, const fs::path &thumbnail)
 :name(name),
 pos(vec3(0)),
 scale(vec3(1)),
@@ -34,7 +34,9 @@ rotation(vec3(0)),
 memoryUse(64),
 hp(100),
 maxHp(100),
-highlightColor(properties::highlightColor)
+highlightColor(properties::highlightColor),
+speed(1.0f),
+thumbnail(nullptr)
 {
     flags.enabled = true;
     flags.hasGravity = true;
@@ -42,9 +44,10 @@ highlightColor(properties::highlightColor)
     flags.solid = true;
     flags.movable = true;
     flags.highlight = false;
+    flags.visible = true;
     
     if(prog == nullptr)
-        prog = gl::getStockShader( gl::ShaderDef().lambert().color());
+        prog = gl::getStockShader(gl::ShaderDef().lambert().color());
     
     if(model.empty()) {
         mesh = TriMesh::create(geom::Cube());
@@ -54,8 +57,14 @@ highlightColor(properties::highlightColor)
         ObjLoader ol(loadAsset(model));
         mesh = TriMesh::create(ol);
         aabb = mesh->calcBoundingBox();
-        batch = gl::Batch::create(ol, gl::getStockShader( gl::ShaderDef().lambert().color() ) );
+        batch = gl::Batch::create(ol, gl::getStockShader(gl::ShaderDef().lambert().color()));
     }
+    
+    if(!thumbnail.empty()) {
+        this->thumbnail = gl::Texture::create(loadImage(loadAsset(thumbnail)));
+    }
+    
+    actions = shared_ptr<ContextMenu>(new ContextMenu());
     
     setupShaders();
     shadow.fbo = gl::Fbo::create(properties::screenWidth, properties::screenHeight);
@@ -89,6 +98,8 @@ void Entity::render(Camera cam)
 
 void Entity::draw(Camera cam)
 {
+    if(!flags.visible)
+        return;
     render(cam);
     if(shadow.draw) {
         gl::setMatricesWindow(properties::screenSize);
@@ -153,7 +164,7 @@ void Entity::say(string text)
 
 void Entity::addAction(string name, function<void()> fn)
 {
-    actions.addItem(name, fn);
+    actions->addItem(name, fn);
 }
 
 void Entity::setDrawState(EntityDrawState state)

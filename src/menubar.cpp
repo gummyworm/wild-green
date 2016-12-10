@@ -8,33 +8,14 @@
 
 #include "menubar.hpp"
 
-void MenuBar::addSubmenu(Menu m)
+void MenuBar::addSubmenu(shared_ptr<ContextMenu> m)
 {
-    // set the rect of the menu to follow the previous item
-    if(menus.size() > 1) {
-        Menu *prevMenu = &menus[menus.size()-2];
-        m.rect = prevMenu->rect;
-        m.rect.x1 += prevMenu->name.length() * 12;
-        m.rect.x2 += prevMenu->name.length() * 12;
-    } else {
-        m.rect = Rectf(0, 0, m.name.length() * 12, height);
-    }
+    m->setPos(m->getPos2D() + ivec2(0, height));
+    m->setFixed(true);
     menus.push_back(m);
+    font = gl::TextureFont::create(properties::menuFont);
 }
 
-void MenuBar::addItem(string submenu, string name, function<void()> callback)
-{
-    Menu *sm = nullptr;
-    
-    for(auto m : menus) {
-        if(m.name.compare(submenu) == 0) {
-            sm = &m;
-            break;
-        }
-    }
-    if(sm != nullptr)
-        sm->addItem(name, callback);
-}
 
 void MenuBar::draw()
 {
@@ -43,43 +24,53 @@ void MenuBar::draw()
     gl::color(0.8f,0.8f,0.8f);
     gl::drawSolidRect(submenuRect);
     
+    ivec2 cursor = getPos2D();
     for(auto sm : menus) {
-        submenuRect.x2 = submenuRect.x1 + sm.name.length() * 12;
-        
-        Rectf textRect = submenuRect;
-        textRect.x1 += 4;
-        textRect.y1 = 4;
-        
-        if(sm.open) {
-            gl::color(0, 0, 0);
-            gl::drawSolidRect(submenuRect);
-            gl::drawString(sm.name, textRect.getUpperLeft(), ColorA(1,1,1));
-            sm.draw();
-            sm.apply();
+        if(sm->isVisible()) {
+            gl::color(0.5f, 0.5f, 0.5f);
         } else {
             gl::color(0.8f,0.8f,0.8f);
-            gl::drawSolidRect(submenuRect);
-            gl::drawString(sm.name, textRect.getUpperLeft(), ColorA(0,0,0));
         }
-        submenuRect.x1 += sm.name.length() * 12;
+        float w = font->measureString(sm->getName()).x;
+        submenuRect.x2 = cursor.x + w;
+        gl::drawSolidRect(submenuRect);
+        gl::drawString(sm->getName(), cursor);
+        cursor.x += w;
+        submenuRect.x1 = submenuRect.x2;
+        sm->draw();
+        sm->apply();
     }
 }
 
 bool MenuBar::onMouseDrag(MouseEvent event)
 {
+    for(auto sm : menus) {
+        if(sm->onMouseDrag(event))
+            return true;
+    }
     return false;
 }
 
 bool MenuBar::onMouseDown(MouseEvent event)
 {
-    ivec2 mousePos = event.getPos();
+    Rectf submenuRect(0, 0, getWindowWidth(), height);
+    ivec2 cursor = getPos2D();
+    for(auto sm : menus) {
+        float w = font->measureString(sm->getName()).x;
+        submenuRect.x2 = cursor.x + w;
+        if(submenuRect.contains(event.getPos())) {
+            sm->setVisible(true);
+        }
+        cursor.x += w;
+        submenuRect.x1 = submenuRect.x2;
+        
+    }
 
-    for(auto &sm : menus) {
-        if(sm.contains(mousePos)) {
-            sm.open = true;
-            return true;
-        } else {
-            sm.open = false;
+    for(auto sm : menus) {
+        if(sm->isVisible()) {
+            if(sm->onMouseDown(event)) {
+                return true;
+            }
         }
     }
     return false;
@@ -87,9 +78,11 @@ bool MenuBar::onMouseDown(MouseEvent event)
 
 bool MenuBar::onMouseUp(MouseEvent event)
 {
-    for(auto &sm : menus) {
-        if(sm.open == false)
-            return true;
+    for(auto sm : menus) {
+        sm->onMouseUp(event);
+    }
+    for(auto sm : menus) {
+        sm->setVisible(false);
     }
     return false;
 }

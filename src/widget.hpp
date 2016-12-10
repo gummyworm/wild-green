@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
+#include "cinder/gl/TextureFont.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -21,6 +22,8 @@ class Widget {
 protected:
     struct Flags {
         bool drawBorder;
+        bool drawBg;
+        bool scissor;
     } flags;
     
     Widget *parent;
@@ -36,20 +39,25 @@ protected:
     bool show;
     
     int fontSize;
+    gl::TextureFontRef font;
     ColorA bgColor;
     ColorA fontColor;
     
     vector<shared_ptr<Widget>> children;
-
-    void grab(ivec2 offset) {
-        grabbed = true;
-        grabbedPos = offset - getAbsPos2D();
-    }
-    void ungrab() {grabbed = false;}
+    vector<Widget*> toRemove;
+    vector<shared_ptr<Widget>> toAdd;
+    
+    // priority provides a hint to the ordering of widgets when rendering.
+    int priority;
+    
+    Rectf border;
+    void applyBorderOffset();
 public:
     Widget(Widget *parent=nullptr, int width = 96, int height = 128, bool borderless = false);
     
-    void addChild(shared_ptr<Widget> child);
+    virtual void addChild(shared_ptr<Widget> child);
+    void removeChild(Widget *child);
+    shared_ptr<Widget> getChild(Widget *w);
 
     // draw renders this widget.
     virtual void draw();
@@ -67,17 +75,19 @@ public:
     
     void pullToFront();
     void pushDown();
+    void reparent(Widget *w);
     
     Rectf getRect();
     bool isVisible() {return show;}
     
     virtual bool onMouseDown(MouseEvent event);
-    virtual bool onMouseUp(MouseEvent event) {return false;}
+    virtual bool onMouseUp(MouseEvent event);
     virtual bool onMouseMove(MouseEvent event) {return false;}
-    virtual bool onMouseDrag(MouseEvent event) {return false;}
+    virtual bool onMouseDrag(MouseEvent event);
     virtual bool onKeydown(KeyEvent event) {return false;}
     virtual bool onAccept(MouseEvent event, shared_ptr<class Entity> e) {return false;}
-    virtual void update() {}
+    virtual bool onAccept(MouseEvent, shared_ptr<Widget> w) {return false;}
+    virtual void update();
     
     ivec3 getPos() {return pos;}
     ivec2 getPos2D() {return ivec2(pos.x, pos.y);}
@@ -87,6 +97,7 @@ public:
             pos += p->getPos();
         return pos;
     }
+    
     ivec2 getAbsPos2D() {
         ivec2 pos = getPos2D();
         for(auto p = parent; p != nullptr; p = p->parent)
@@ -101,6 +112,16 @@ public:
         setPos(pos - p);
     }
     
+    void grab(ivec2 offset) {
+        grabbed = true;
+        grabbedPos = offset - getAbsPos2D();
+        pullToFront();
+    }
+    
+    void ungrab() {
+        grabbed = false;
+    }
+
     void setAbsPos2D(ivec2 pos) {
         setAbsPos(ivec3(pos.x, pos.y, this->pos.z));
     }

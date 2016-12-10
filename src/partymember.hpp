@@ -46,6 +46,9 @@ protected:
     
     shared_ptr<Conversation> convo;
     shared_ptr<Entity> entity;
+    
+    bool drawShadow;
+    vec2 shadowPos;
 public:
     PartyMember(shared_ptr<Entity> e, string name, const fs::path portrait, const fs::path handImg="");
     

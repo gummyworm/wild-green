@@ -20,6 +20,7 @@ protected:
 public:
     Door(bool open = false, shared_ptr<Entity> key=nullptr);
     virtual void onOpen() {open = true;}
+    virtual void onClose() {open = false;}
     
     void onAccept(shared_ptr<Entity> e) override;
     void update() override;
@@ -42,6 +43,7 @@ public:
     SlidingDoor(vec3 closedOffset=vec3(0,0,0), vec3 openOffset=vec3(0,1,0), float openSpeed=2.0f, bool open = false, shared_ptr<Entity> key=nullptr);
     
     void onOpen() override;
+    void onClose() override;
     void update() override;
 };
 

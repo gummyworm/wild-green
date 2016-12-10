@@ -1,0 +1,28 @@
+dependencies: \
+  /Users/bryce/src/github.com/gummyworm/digital/src/digitalApp.cpp \
+  ../../../../../Downloads/cinder_0.9.0_mac/include/cinder/app/RendererGl.h \
+  /Users/bryce/src/github.com/gummyworm/digital/src/conversation.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/speechbubble.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/entity.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/contextmenu.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/menu.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/widget.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/properties.h \
+  /Users/bryce/src/github.com/gummyworm/digital/src/materials.h \
+  /Users/bryce/src/github.com/gummyworm/digital/src/post.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/party.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/partymember.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/overlay.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/window.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/inspector.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/prg.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/menubar.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/playercam.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/fileviewer.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/zap_spell.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/spell.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/game.h \
+  /Users/bryce/src/github.com/gummyworm/digital/src/guimanager.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/speech.hpp \
+  /Users/bryce/src/github.com/gummyworm/digital/src/combat.hpp \
+  ../../../../../Downloads/cinder_0.9.0_mac/include/cinder/objloader.h

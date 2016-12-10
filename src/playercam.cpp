@@ -9,13 +9,14 @@
 #include "playercam.hpp"
 #include "properties.h"
 
-PlayerCam::PlayerCam(float aspectRatio)
+PlayerCam::PlayerCam(float aspectRatio, shared_ptr<Entity> e)
 :CameraPersp(),
 viewRot(0,0,0),
 viewPos(0,.7f,-10),
 viewDir(0,0,0),
 moveSpeed(0.25f),
 turnSpeed(0.1f),
+entity(e),
 aabb(vec3(-properties::playerAABBSize), vec3(properties::playerAABBSize))
 {
     setPerspective(40.0f, aspectRatio, 0, 100.0f);
@@ -49,10 +50,18 @@ void PlayerCam::onKeyDown(KeyEvent event)
             viewRot.x += turnSpeed;
             break;
         case KeyEvent::KEY_w:
-            viewPos += viewDir * moveSpeed;
+            if(event.isShiftDown()) {
+                viewPos.y += moveSpeed;
+            } else {
+                viewPos += viewDir * moveSpeed;
+            }
             break;
         case KeyEvent::KEY_s:
-            viewPos -= viewDir * moveSpeed;
+            if(event.isShiftDown()) {
+                viewPos.y -= moveSpeed;
+            } else {
+                viewPos -= viewDir * moveSpeed;
+            }
             break;
         case KeyEvent::KEY_a:
             viewPos -= glm::cross(viewDir, vec3(0, 1, 0)) * moveSpeed;
@@ -62,6 +71,9 @@ void PlayerCam::onKeyDown(KeyEvent event)
             break;
         default:
             break;
+    }
+    if(entity != nullptr) {
+        entity->setPos(viewPos);
     }
     update();
 }

@@ -16,11 +16,11 @@ void WidgetWindow::Scrollbar::draw(Rectf parentRect)
     //if(!enabled)
     //return;
     
-    Rectf leftarrowRect = getLeftArrow(parentRect);
-    Rectf rightarrowRect = getRightArrow(parentRect);
-    Rectf uparrowRect = getUpArrow(parentRect);
-    Rectf downarrowRect = getDownArrow(parentRect);
-    Rectf barRect = getBarRect(parentRect);
+    Rectf leftarrowRect = getLeftArrow();
+    Rectf rightarrowRect = getRightArrow();
+    Rectf uparrowRect = getUpArrow();
+    Rectf downarrowRect = getDownArrow();
+    Rectf barRect = getBarRect();
     if(horiz) {
         gl::drawSolidRect(barRect);
         gl::draw(leftArrow, leftarrowRect);
@@ -32,87 +32,87 @@ void WidgetWindow::Scrollbar::draw(Rectf parentRect)
     }
 }
 
-Rectf WidgetWindow::Scrollbar::getLeftArrow(Rectf winRect)
+Rectf WidgetWindow::Scrollbar::getLeftArrow()
 {
-    Rectf r = getBarRect(winRect);
+    Rectf r = getBarRect();
     r.x2 = r.x1 + gui::windowBorderWidth;
     return r;
 }
 
-Rectf WidgetWindow::Scrollbar::getRightArrow(Rectf winRect)
+Rectf WidgetWindow::Scrollbar::getRightArrow()
 {
-    Rectf r = getBarRect(winRect);
+    Rectf r = getBarRect();
     r.x1 = r.x2 - gui::windowBorderWidth;
     return r;
 }
 
-Rectf WidgetWindow::Scrollbar::getDownArrow(Rectf winRect)
+Rectf WidgetWindow::Scrollbar::getDownArrow()
 {
-    Rectf r = getBarRect(winRect);
+    Rectf r = getBarRect();
     r.y1 = r.y2 - gui::windowBorderWidth;
     return r;
 }
 
-Rectf WidgetWindow::Scrollbar::getUpArrow(Rectf winRect)
+Rectf WidgetWindow::Scrollbar::getUpArrow()
 {
-    Rectf r = getBarRect(winRect);
+    Rectf r = getBarRect();
     r.y2 = r.y1 + gui::windowBorderWidth;
     return r;
 }
 
-Rectf WidgetWindow::Scrollbar::getBarRect(Rectf winRect)
+Rectf WidgetWindow::Scrollbar::getBarRect()
 {
-    Rectf r = winRect;
+    Rectf r = parent->getRect();
     if(horiz) {
-        r.y1 = r.y2;
-        r.y2 += gui::windowBorderWidth;
+        r.x2 -= gui::windowBorderWidth;
+        r.y1 = r.y2 - gui::windowBorderWidth;
     } else {
-        r.x1 = r.x2;
-        r.x2 += gui::windowBorderWidth;
+        r.y1 += properties::windowTitleHeight;
+        r.y2 -= gui::windowBorderWidth;
+        r.x1 = r.x2 - gui::windowBorderWidth;
     }
     return r;
 }
 
-Rectf WidgetWindow::getResizeRect(Rectf winRect)
+Rectf WidgetWindow::getResizeRect()
 {
-    Rectf r = winRect;
-    r.x1 = r.x2;
-    r.x2 += gui::windowBorderWidth;
-    r.y1 = r.y2;
-    r.y2 += gui::windowBorderWidth;
+    Rectf r = getRect();
+    r.x1 = r.x2 - gui::windowBorderWidth;
+    r.y1 = r.y2 - gui::windowBorderWidth;
     return r;
 }
 
-Rectf WidgetWindow::getBringFrontRect(Rectf winRect)
+Rectf WidgetWindow::getBringFrontRect()
 {
-    Rectf r = winRect;
-    r.x1 = r.x2;
-    r.x2 += gui::windowBorderWidth;
-    r.y2 = r.y1;
-    r.y1 -= gui::windowBorderWidth;
+    Rectf r = getRect();
+    r.x2 -= gui::windowBorderWidth;
+    r.x1 = r.x2 - gui::windowBorderWidth;
+    r.y2 = r.y1 + gui::windowBorderWidth;
     return r;
 }
 
 void WidgetWindow::Scrollbar::onMouseDown(MouseEvent event, Rectf winRect)
 {
-    Rectf leftarrowRect = getLeftArrow(winRect);
-    Rectf rightarrowRect = getRightArrow(winRect);
-    Rectf uparrowRect = getUpArrow(winRect);
-    Rectf downarrowRect = getDownArrow(winRect);
+    Rectf offset = Rectf(parent->getAbsPos2D(), parent->getAbsPos2D());
+    Rectf leftarrowRect = getLeftArrow() + offset;
+    Rectf rightarrowRect = getRightArrow() + offset;
+    Rectf uparrowRect = getUpArrow() + offset;
+    Rectf downarrowRect = getDownArrow() + offset;
     
     ivec2 pos = event.getPos();
+    
     if(horiz) {
-        if(leftarrowRect.contains(pos)) {
-            cout << "left" << endl;
-        } else if(rightarrowRect.contains(pos)) {
-            cout << "right" << endl;
+        if(leftarrowRect.contains(pos) && scroll > 0) {
+            scroll--;
+        } else if(rightarrowRect.contains(pos) && scroll < parent->getVirtualSize().x) {
+            scroll++;
         }
     }
     else {
-        if(uparrowRect.contains(pos)) {
-            cout << "up" << endl;
-        } else if(downarrowRect.contains(pos)) {
-            cout << "down" << endl;
+        if(uparrowRect.contains(pos) && scroll > 0) {
+            scroll--;
+        } else if(downarrowRect.contains(pos) && scroll < parent->getVirtualSize().y) {
+            scroll++;
         }
     }
 }
@@ -126,19 +126,20 @@ prevMouse(0,0),
 closeButton(3,3,10,10),
 closeButtonOffset(3,3),
 resizable(true),
-hScroll(true),
-vScroll(false)
+hScroll(this, true),
+vScroll(this, false)
 {
     setVisible(true);
     resize(ivec2(width, height));
     resizeIcon = gl::Texture::create(loadImage(loadAsset("resizeicon.png")));
     bringFrontIcon = gl::Texture::create(loadImage(loadAsset("bringfronticon.png")));
+    
+    flags.scissor = true;
+    virtualSize = ivec2(1000,1000);
 }
 
 bool WidgetWindow::onMouseDown(MouseEvent event)
-{
-    Widget::onMouseDown(event);
-    
+{    
     Rectf grabRect(vec2(), vec2(dim.x, title.height));
     
     vec2 mousePos = event.getPos();
@@ -154,7 +155,7 @@ bool WidgetWindow::onMouseDown(MouseEvent event)
     hScroll.onMouseDown(event, getRect());
     
     // check bring front
-    if(getBringFrontRect(getRect()).contains(mouseRel)) {
+    if(getBringFrontRect().contains(mouseRel)) {
         game::guiMgr.bringFront(this);
         return true;
     }
@@ -169,14 +170,20 @@ bool WidgetWindow::onMouseDown(MouseEvent event)
     }
     
     // check resize
-    if(getResizeRect(getRect()).contains(mouseRel)) {
+    if(resizable && getResizeRect().contains(mouseRel)) {
         prevMouse = mousePos;
         resizing = true;
         return true;
     } else {
         resizing = false;
     }
-    
+
+    event.setPos(event.getPos() + getScroll());
+    for(auto c : children) {
+        if(c->onMouseDown(event)) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -184,11 +191,21 @@ bool WidgetWindow::onMouseUp(MouseEvent event)
 {
     grabbed = false;
     resizing = false;
-    return Widget::onMouseUp(event);
+    
+    Widget::onMouseUp(event);
+    
+    event.setPos(event.getPos() + getScroll());
+    for(auto c : children) {
+        if(c->onMouseUp(event)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool WidgetWindow::onMouseMove(MouseEvent event)
 {
+    event.setPos(event.getPos() + getScroll());
     return Widget::onMouseMove(event);
 }
 
@@ -228,6 +245,18 @@ bool WidgetWindow::onMouseDrag(MouseEvent event)
     return true;
 }
 
+bool WidgetWindow::onAccept(MouseEvent event, shared_ptr<class Entity> e)
+{
+    Widget::onAccept(event, e);
+    event.setPos(event.getPos() + getScroll());
+    
+    for(auto c : children) {
+        if(c->onAccept(event, e)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void WidgetWindow::setTitle(string title)
 {
@@ -240,42 +269,59 @@ void WidgetWindow::draw()
     if(!show)
         return;
     
-    vec2 titleLoc = vec2((dim.x/2), 2);
+    vec2 titleDim = title.font->measureString(title.text);
+    vec2 titleLoc = vec2(dim.x/2.0f - titleDim.x/2.0f, titleDim.y);
     Rectf titleRect = getRect();
     titleRect.y2 = titleRect.y1 + title.height;
     
     gl::color(1,0,0,1);
     
     gl::color(gui::windowBgColor);
-    gl::drawSolidRect(getRect());
     gl::color(0,0,1,1);
     gl::drawSolidRect(titleRect);
     gl::color(1,1,1,1);
     gl::drawSolidRect(closeButton);
-    gl::drawString(title.text, titleLoc);
+    title.font->drawString(title.text, titleLoc);
     
     if(resizable) {
-        gl::draw(resizeIcon, getResizeRect(getRect()));
+        gl::draw(resizeIcon, getResizeRect());
     }
     
-    gl::draw(bringFrontIcon, getBringFrontRect(getRect()));
+    gl::draw(bringFrontIcon, getBringFrontRect());
     
     hScroll.draw(getRect());
     vScroll.draw(getRect());
     
     gl::color(1,1,1,1);
     
-    /*
-    if(true) {  //virtualSize.x > getRect().getWidth()) {
+    if(virtualSize.x > getRect().getWidth()) {
         hScroll.draw(getRect());
     }
     if(virtualSize.y > getRect().getHeight()) {
         vScroll.draw(getRect());
     }
-    */
+    
+    gl::translate(-hScroll.getScroll(), -vScroll.getScroll(), 0);
+    
+    vec2 scale = vec2((float)app::getWindowWidth() / properties::screenWidth, (float)app::getWindowHeight() / properties::screenHeight);
+    vec2 d = vec2(dim.x - gui::windowBorderWidth, dim.y - gui::windowBorderWidth - title.height);
+    int x = getAbsPos2D().x;
+    int y = properties::screenHeight - (getAbsPos2D().y + (dim.y - gui::windowBorderWidth));
+    gl::scissor(scale.x * x, scale.y * y, d.x * scale.x, d.y * scale.y);
+    for(auto c : children) {
+        c->draw();
+        c->apply();
+    }
 }
 
 Rectf WidgetWindow::getInternalRect()
 {
-    return getRect() + Rectf(0, title.height, 0, 0);
+    Rectf r = getRect() + Rectf(0, title.height, 0, 0);
+    if(hScroll.getVisible()) {
+        r.y2 -= gui::borderWidth;
+    }
+    if(vScroll.getVisible()) {
+        r.x2 -= gui::borderWidth;
+    }
+    return r;
 }

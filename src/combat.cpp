@@ -21,7 +21,7 @@ entity(e)
 
 void CombatLauncher::launch()
 {
-    game::guiMgr.addWidget(new Combat(entity));
+    game::guiMgr.addWidget(shared_ptr<Widget>(new Combat(entity)));
 }
 
 bool CombatLauncher::onMouseDown(MouseEvent event)
@@ -31,7 +31,7 @@ bool CombatLauncher::onMouseDown(MouseEvent event)
 
 bool CombatLauncher::onAccept(MouseEvent event, shared_ptr<class Entity> e)
 {
-    game::guiMgr.addWidget(new Combat(entity));
+    game::guiMgr.addWidget(shared_ptr<Widget>(new Combat(entity)));
     return true;
 }
 
@@ -45,7 +45,7 @@ combatMenu()
     cam.lookAt(vec3(0.0f, 0.0f, -1.0f), vec3(0.0f, 0.0f, 0.0f));
     cam.setEyePoint(vec3(0.0f, 0.0f, -10.0f));
     cam.setPerspective(40.0f, getInternalRect().getWidth() / getInternalRect().getHeight(), 0.01f, 100.0f);
-    
+
     combatMenu.addItem("HIT", [](){});
     combatMenu.addItem("SPELL", [](){});
     combatMenu.addItem("SPEAK", [](){});
@@ -60,10 +60,14 @@ void Combat::draw()
     
     gl::pushMatrices();
     
-    fbo->bindFramebuffer();
     gl::setMatrices(cam);
-    gl::clear(ColorA(1,0,0,1));
-    gl::color(0,1,0);
+    
+    fbo->bindFramebuffer();
+    gl::pushViewport();
+    gl::viewport( fbo->getSize() );
+    gl::disable(GL_SCISSOR_TEST);
+    gl::clear();
+    gl::color(1,1,1);
     entity->getBatch()->draw();
     
     // draw the UI: name, health bar, status, etc.
@@ -81,11 +85,13 @@ void Combat::draw()
     
     fbo->unbindFramebuffer();
     
+    gl::enable(GL_SCISSOR_TEST);
+    gl::popViewport();
     gl::popMatrices();
     gl::draw(fbo->getColorTexture(), getInternalRect());
-    
-    combatMenu.draw();
-    combatMenu.apply();
+
+    //combatMenu.draw();
+    //combatMenu.apply();
     gl::color(1,1,1,1);
 }
 

@@ -21,6 +21,7 @@ public:
     
     void say(Entity *speaker, string msg);
     void say(unique_ptr<SpeechBubble> speech);
+    void silence(Entity *speaker);
     void update();
     void draw();
     

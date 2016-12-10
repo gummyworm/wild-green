@@ -18,7 +18,9 @@ locked(false),
 key(key)
 {
     auto fn = bind(&Door::onOpen, this);
+    auto closeFn = bind(&Door::onClose, this);
     addAction("OPEN", fn);
+    addAction("CLOSE", closeFn);
     
     flags.hasGravity = false;
     flags.grabbable = false;
@@ -70,7 +72,7 @@ void SwingingDoor::update()
 SlidingDoor::SlidingDoor(vec3 closedOffset, vec3 openOffset, float openSpeed, bool open, shared_ptr<Entity> key)
 :closedOffset(closedOffset),
 openOffset(openOffset),
-openingTime(0.0f),
+openingTime(openSpeed+1.0f),
 openSpeed(openSpeed)
 {
     Door::Door(open, key);
@@ -89,14 +91,31 @@ void SlidingDoor::onOpen()
     openingTime = 0.0f;
 }
 
+void SlidingDoor::onClose()
+{
+    if(!open)
+        return;
+    open = false;
+    openingTime = 0.0f;
+}
+
+
 void SlidingDoor::update()
 {
     Door::update();
     openingTime += game::deltaTime;
-    if(open && (openingTime < openSpeed)) {
+    if(openingTime < openSpeed) {
+        vec3 start, stop;
+        if(open) {
+            start = closedOffset;
+            stop = openOffset;
+        } else {
+            start = openOffset;
+            stop = closedOffset;
+        }
         if(openingTime >= this->openSpeed)
             pos = openOffset;
         else
-            pos = cinder::lerp(closedOffset, openOffset, openingTime / this->openSpeed);
+            pos = cinder::lerp(start, stop, openingTime / this->openSpeed);
     }
 }

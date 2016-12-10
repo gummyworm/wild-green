@@ -17,9 +17,12 @@ class AIFollow : public AIPattern {
     Entity *target;
     int waypoint;
     int dir;
+    vec3 offset;
 public:
-    AIFollow(Entity *target, float speed=0.5f);
+    AIFollow(Entity *target, float speed=0.5f, vec3 offset=vec3());
     void update() override;
+    
+    void setSpeed(float speed) {this->speed = speed;}
 };
 
 #endif /* ai_follow_hpp */

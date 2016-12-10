@@ -14,14 +14,15 @@
 
 class GUIManager {
 protected:
-    vector<Widget*> widgets;
-    vector<Widget*> newWidgets;
+    vector<shared_ptr<Widget>> widgets;
+    vector<shared_ptr<Widget>> newWidgets;
     vector<Widget*> toRemove;
 public:
     GUIManager();
     
-    void addWidget(Widget *w);
+    void addWidget(shared_ptr<Widget> w);
     void remove(Widget *w);
+    shared_ptr<Widget> getWidget(Widget *w);
     
     void bringFront(Widget *widget);
     void moveBack(Widget *widget);
@@ -30,8 +31,11 @@ public:
     void onMouseUp(MouseEvent event);
     void onMouseMove(MouseEvent event);
     void onMouseDrag(MouseEvent event);
-    void onKeydown(KeyEvent event);
-    void onAccept(MouseEvent event, shared_ptr<class Entity> e);
+    bool onKeydown(KeyEvent event);
+    
+    bool onAccept(MouseEvent event, shared_ptr<class Entity> e);
+    bool onAccept(MouseEvent event, shared_ptr<Widget> w);
+    
     void update();
     void draw();
 };

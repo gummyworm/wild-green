@@ -28,6 +28,7 @@ enum EntityDrawState {
 
 struct EntityFlags {
     bool enabled;
+    bool visible;
     bool grabbable;
     bool movable;
     bool hasGravity;
@@ -72,12 +73,16 @@ protected:
     int hp;
     int maxHp;
     int memoryUse;
+    float speed;
     
     gl::BatchRef batch;
     gl::TextureFontRef font;
 
+    // thumbnail is an optional texture to represent the entity in 2D contexts.
+    gl::TextureRef thumbnail;
+    
     vector<shared_ptr<Entity>> children;
-    ContextMenu actions;
+    shared_ptr<ContextMenu> actions;
     
     EntityDrawState drawState;
 
@@ -86,10 +91,11 @@ protected:
     void setupShaders();
     void render(Camera cam);
 public:
-    Entity(string name, const fs::path &model="", gl::GlslProgRef prog=nullptr);
+    Entity(string name, const fs::path &model="", gl::GlslProgRef prog=nullptr, const fs::path &thumbnail="");
     void setPos(vec3 pos) {this->pos = pos;}
     void setRot(vec3 rot) {this->rotation = rot;}
     void setMemorySize(int sz) {this->memoryUse = sz;}
+    void setSpeed(float s) {speed = s;}
 
     virtual void draw(Camera cam);
     virtual void label(Camera cam);
@@ -108,11 +114,13 @@ public:
     TriMesh* getMesh() {return mesh.get();}
     gl::BatchRef getBatch() {return batch;}
     EntityFlags getFlags() {return flags;}
+    gl::TextureRef getThumbnail() {return thumbnail;}
     
     mat4 getTransform() {return transform;}
-    ContextMenu* getActions() {return &actions;}
+    shared_ptr<ContextMenu> getActions() {return actions;}
     int getHP() {return hp;}
     int getMaxHP() {return maxHp;}
+    float getSpeed() {return speed;}
     vec3 getPos() {return pos;}
     vec3 getScale() {return scale;}
     vec3 getRotation() {return rotation;}
@@ -139,7 +147,10 @@ public:
     bool isGrabbed() {return shadow.draw;}
     void setShadow(bool on) {shadow.draw = on;}
     bool isEnabled() {return flags.enabled;}
+    bool isVisible() {return flags.visible;}
     void setEnabled(bool enable) {flags.enabled = enable;}
+    void setVisible(bool enable) {flags.visible = enable;}
+    void setHP(int newHP) {hp = newHP > 0 ? newHP : 0;}
     void generateShadow();
     void setShadowPos(ivec2 pos) {shadow.pos = pos;}
 };

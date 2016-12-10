@@ -9,14 +9,17 @@
 #include "contextmenu.hpp"
 #include "widget.hpp"
 #include "properties.h"
+#include "game.h"
 
 using namespace std;
 
-ContextMenu::ContextMenu()
+ContextMenu::ContextMenu(string name)
 :Widget(),
+name(name),
 highlightColor(0.8f,0.8f,0.8f,1.0f)
 {
     flags.drawBorder = false;
+    font = gl::TextureFont::create(properties::menuFont);
 }
 
 void ContextMenu::addItem(string name, function<void()> callback)
@@ -37,15 +40,16 @@ void ContextMenu::draw()
     
     Rectf rect = getRect();
     float bot = rect.y2;
-
-    rect.y2 = fontSize;
     vec2 p = vec2();
     
     for(int i = 0; i < items.size(); ++i) {
         auto a = items[i];
-        if((p.y+fontSize) > bot)
+        
+        float h = font->measureString(items[i].getName()).y;
+        rect.y2 = rect.y1 + h;
+        if(p.y > bot)
             break;
-
+        
         if(i == highlightedItem)
             gl::color(highlightColor);
         else
@@ -54,9 +58,8 @@ void ContextMenu::draw()
         gl::drawSolidRect(rect);
         gl::drawString(a.getName(), p, fontColor);
         
-        p.y += fontSize;
-        rect.y1 += fontSize;
-        rect.y2 += fontSize;
+        p.y += h;
+        rect.y1 += h;
     }
     
     gl::color(ColorA::white());
@@ -64,19 +67,23 @@ void ContextMenu::draw()
 
 int ContextMenu::itemOffset(int y)
 {
-    int offset = y - pos.y;
-    if(offset < 0 || offset > dim.y)
-        return -1;
-    int choice = offset / fontSize;
-    if(choice < items.size())
-        return choice;
+    int cursor = getPos2D().y;
+    int i = 0;
+    for(auto item : items) {
+        int h = font->measureString(item.getName()).y;
+        if(cursor > y && (cursor < y + h))
+            return i;
+        cursor += h;
+        ++i;
+    }
     return -1;
 }
 
 bool ContextMenu::onMouseDown(MouseEvent event)
 {
     setVisible(true);
-    setPos(event.getPos());
+    if(!fixedPos)
+        setPos(vec3(event.getPos(), 1000));
     highlightedItem = 0;
     return true;
 }
@@ -91,6 +98,7 @@ bool ContextMenu::onMouseMove(MouseEvent event)
 
 bool ContextMenu::onMouseUp(MouseEvent event)
 {
+    game::guiMgr.remove(this);
     if(!isVisible())
         return false;
     

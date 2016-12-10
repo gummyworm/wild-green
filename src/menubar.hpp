@@ -16,6 +16,8 @@
 #include <vector>
 #include "menu.hpp"
 #include "widget.hpp"
+#include "contextmenu.hpp"
+#include <cinder/gl/TextureFont.h>
 
 using namespace std;
 using namespace ci;
@@ -23,15 +25,17 @@ using namespace ci::app;
 
 class MenuBar : public Widget {
 protected:
-    vector<Menu> menus;
+    vector<shared_ptr<ContextMenu>> menus;
     
     int selectedMenu;
     int height;
 public:
-    MenuBar():Widget(),selectedMenu(-1), height(16){pos = vec3(0,0,0);}
+    MenuBar():Widget(),selectedMenu(-1), height(16){
+        pos = vec3(0,0,0);
+        flags.drawBorder = false;
+    }
     
-    void addSubmenu(Menu m);
-    void addItem(string submenu, string name, function<void()> callback);
+    void addSubmenu(shared_ptr<ContextMenu> m);
     void draw() override;
     bool onMouseDrag(MouseEvent event) override;
     bool onMouseDown(MouseEvent event) override;

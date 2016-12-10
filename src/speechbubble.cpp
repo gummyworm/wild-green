@@ -106,10 +106,8 @@ void SpeechBubble2::draw()
     if(!show)
         return;
     
-    if(speakerPortrait == nullptr)
-        return;
-    
-    gl::drawLine(vec3(getRect().x1+8, getRect().y2, 0.0f), vec3(speakerPortrait->getPos())+vec3(3,0,0) - vec3(getPos()));
+    if(speakerPortrait != nullptr)
+        gl::drawLine(vec3(getRect().x1+8, getRect().y2, 0.0f), vec3(speakerPortrait->getPos())+vec3(3,0,0) - vec3(getPos()));
     gl::color(properties::speechboxBgColor);
     gl::enableAlphaBlending();
     gl::drawSolidRect(getRect());
@@ -124,21 +122,28 @@ void SpeechBubble2::say(string msg)
     vec2 size = font->measureString(text) + vec2(properties::speechboxTextOffset);
     
     float top, bot, left, right;
-    switch (dir) {
-        case UP:
-            top = speakerPortrait->getPos2D().y-size.y-(properties::speechboxOffset.y);
-            bot = speakerPortrait->getPos2D().y-properties::speechboxOffset.y+properties::speechboxTextOffset.y;
-            left = speakerPortrait->getPos2D().x+properties::speechboxOffset.x;
-            right = speakerPortrait->getPos2D().x+size.x+properties::speechboxOffset.x+properties::speechboxTextOffset.x;
-            break;
-        case DOWN:
-            top = speakerPortrait->getPos2D().y;
-            bot = speakerPortrait->getPos2D().y+properties::speechboxSize.y;
-            left = speakerPortrait->getPos2D().x;
-            right = speakerPortrait->getPos2D().x+properties::speechboxSize.x;
-            break;
-        default:
-            break;
+    if(speakerPortrait == nullptr) {
+        top = 0;
+        bot = 100;
+        left = 0;
+        right = 100;
+    } else {
+        switch (dir) {
+            case UP:
+                top = speakerPortrait->getPos2D().y-size.y-(properties::speechboxOffset.y);
+                bot = speakerPortrait->getPos2D().y-properties::speechboxOffset.y+properties::speechboxTextOffset.y;
+                left = speakerPortrait->getPos2D().x+properties::speechboxOffset.x;
+                right = speakerPortrait->getPos2D().x+size.x+properties::speechboxOffset.x+properties::speechboxTextOffset.x;
+                break;
+            case DOWN:
+                top = speakerPortrait->getPos2D().y;
+                bot = speakerPortrait->getPos2D().y+properties::speechboxSize.y;
+                left = speakerPortrait->getPos2D().x;
+                right = speakerPortrait->getPos2D().x+properties::speechboxSize.x;
+                break;
+            default:
+                break;
+        }
     }
     
     setPos(ivec2(left, top));

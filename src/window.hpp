@@ -13,6 +13,7 @@
 #include <string.h>
 #include "cinder/gl/gl.h"
 #include "widget.hpp"
+#include "properties.h"
 
 using namespace cinder;
 
@@ -20,7 +21,11 @@ class WidgetWindow : public Widget {
 protected:
     class TitleBar {
     public:
-        TitleBar(string name):text(name),height(20) {}
+        gl::TextureFontRef font;
+
+        TitleBar(string name):text(name),height(properties::windowTitleHeight) {
+            font = gl::TextureFont::create(properties::windowTitleFont);
+        }
         string text;
         int height;
     };
@@ -33,15 +38,19 @@ protected:
         int scroll;
         bool grabbed;
         
+        WidgetWindow *parent;
+        
         gl::TextureRef upArrow, downArrow, leftArrow, rightArrow;
         
-        Rectf getLeftArrow(Rectf winRect);
-        Rectf getRightArrow(Rectf winRect);
-        Rectf getDownArrow(Rectf winRect);
-        Rectf getUpArrow(Rectf winRect);
-        Rectf getBarRect(Rectf winRect);
+        Rectf getLeftArrow();
+        Rectf getRightArrow();
+        Rectf getDownArrow();
+        Rectf getUpArrow();
+        Rectf getBarRect();
+        
+        
     public:
-        Scrollbar(bool horiz=false, int size=10):horiz(horiz), minSize(size) {
+        Scrollbar(WidgetWindow* parent, bool horiz=false, int size=10):parent(parent), horiz(horiz), minSize(size), scroll(0) {
             upArrow = gl::Texture::create(loadImage(loadAsset("uparrow.png")));
             downArrow = gl::Texture::create(loadImage(loadAsset("downarrow.png")));
             leftArrow = gl::Texture::create(loadImage(loadAsset("leftarrow.png")));
@@ -49,6 +58,7 @@ protected:
         }
         
         int getScroll() {return scroll;}
+        bool getVisible() {return true;} //scroll > 0;}
         
         void draw(Rectf parentRect);
         void onMouseDown(MouseEvent event, Rectf winRect);
@@ -68,13 +78,12 @@ protected:
     ivec2 virtualSize;
     Scrollbar hScroll, vScroll;
 
-    Rectf getResizeRect(Rectf winRect);
-    Rectf getBringFrontRect(Rectf winRect);
+    Rectf getResizeRect();
+    Rectf getBringFrontRect();
     gl::TextureRef resizeIcon;
     
-    Rectf getBringFrontIcon(Rectf winRect);
+    Rectf getBringFrontIcon();
     gl::TextureRef bringFrontIcon;
-
 public:
     WidgetWindow(string name, int width = 320, int height = 200);
     
@@ -83,10 +92,14 @@ public:
     bool onMouseUp(MouseEvent event) override;
     bool onMouseMove(MouseEvent event) override;
     bool onMouseDrag(MouseEvent event) override;
+    bool onAccept(MouseEvent event, shared_ptr<class Entity> e) override;
     void setTitle(string title);
     
     Rectf getInternalRect();
     ivec2 getInternalPos2D() {return ivec2(pos.x, pos.y+title.height);}
+    void setVirtualSize(ivec2 size) {virtualSize = size;}
+    ivec2 getVirtualSize() {return virtualSize;}
+    ivec2 getScroll() {return ivec2(hScroll.getScroll(), vScroll.getScroll());}
 };
 
 #endif /* window_hpp */
